@@ -1,4 +1,4 @@
-#include "ProjectiveCamera.hpp"
+#include "ThinLensCamera.hpp"
 
 using namespace cv;
 using namespace std;
@@ -6,7 +6,7 @@ using namespace std;
 int main() {
 
     cout << "Loading configuration files..." << endl;
-    ProjectiveCamera camera("data/matlab/canonCamera.yml", "data/matlab/checkerboard.png");
+    ThinLensCamera camera("data/matlab/canonCamera.yml", "data/matlab/checkerboard.png");
     cout << "Camera: " << camera << endl;
 
     cv::FileStorage file("data/matlab/canonCamera.yml", cv::FileStorage::READ);

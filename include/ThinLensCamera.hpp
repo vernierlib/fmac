@@ -4,8 +4,8 @@
  * Copyright (c) 2025 CNRS, ENSMM, UMLP.
  */
 
-#ifndef PROJECTIVE_CAMERA_HPP
-#define PROJECTIVE_CAMERA_HPP
+#ifndef THIN_LENS_CAMERA_HPP
+#define THIN_LENS_CAMERA_HPP
 
 #include "sobol.h"
 #include <Eigen/Dense>
@@ -16,7 +16,7 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
 
-class ProjectiveCamera {
+class ThinLensCamera {
 public:
     // Camera parameters (can be modified before calling the render method)
     cv::Mat cameraMatrix;
@@ -59,7 +59,7 @@ public:
     std::string model = "";
     std::string objectiveLens = "";
 
-    ProjectiveCamera(const std::string &ymlFilename, const std::string &bitmapFilename);
+    ThinLensCamera(const std::string &ymlFilename, const std::string &bitmapFilename);
 
     void render(const cv::Vec3d &rvec, const cv::Vec3d &tvec, cv::Mat &outputImage);
 
@@ -143,6 +143,6 @@ private:
     }
 };
 
-std::ostream &operator<<(std::ostream &os, const ProjectiveCamera &camera);
+std::ostream &operator<<(std::ostream &os, const ThinLensCamera &camera);
 
 #endif

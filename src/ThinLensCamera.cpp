@@ -4,14 +4,14 @@
  * Copyright (c) 2025 CNRS, ENSMM, UMLP.
  */
 
-#include "ProjectiveCamera.hpp"
+#include "ThinLensCamera.hpp"
 
-ProjectiveCamera::ProjectiveCamera(const std::string &ymlFilename, const std::string &bitmapFilename) {
+ThinLensCamera::ThinLensCamera(const std::string &ymlFilename, const std::string &bitmapFilename) {
     readCameraParameters(ymlFilename);
     readMarkerBitmap(bitmapFilename);
 }
 
-void ProjectiveCamera::render(const cv::Vec3d &rvec, const cv::Vec3d &tvec, cv::Mat &outputImage) {
+void ThinLensCamera::render(const cv::Vec3d &rvec, const cv::Vec3d &tvec, cv::Mat &outputImage) {
     checkParameters();
     computeFrameTransforms(rvec, tvec);
     computeRayTracingMetricParameters();
@@ -23,7 +23,7 @@ void ProjectiveCamera::render(const cv::Vec3d &rvec, const cv::Vec3d &tvec, cv::
     quantifyOutputImage(outputImage);
 }
 
-void ProjectiveCamera::showMaps() {
+void ThinLensCamera::showMaps() {
     cv::Mat image0;
     countMap.convertTo(image0, CV_32F, 1);
     cv::normalize(image0, image0, 1.0, 0, cv::NORM_MINMAX);
@@ -46,7 +46,7 @@ void ProjectiveCamera::showMaps() {
     cv::moveWindow("Confusion map", 500, 500);
 }
 
-void ProjectiveCamera::readCameraParameters(const std::string &filename) {
+void ThinLensCamera::readCameraParameters(const std::string &filename) {
     cv::FileStorage file(filename, cv::FileStorage::READ);
     if (!file.isOpened()) {
         throw std::runtime_error("Could not find or read the camera parameter file: " + filename);
@@ -79,7 +79,7 @@ void ProjectiveCamera::readCameraParameters(const std::string &filename) {
     file.release();
 }
 
-void ProjectiveCamera::checkParameters() {
+void ThinLensCamera::checkParameters() {
     assert(imageWidth > 0);
     assert(imageHeight > 0);
     assert((cameraMatrix.cols == 3) && (cameraMatrix.rows == 3));
@@ -96,7 +96,7 @@ void ProjectiveCamera::checkParameters() {
     assert((backgroundIntensity >= 0.0) && (backgroundIntensity <= 1.0));
 }
 
-void ProjectiveCamera::writeCameraParameters(const std::string &filename) {
+void ThinLensCamera::writeCameraParameters(const std::string &filename) {
     cv::FileStorage file(filename, cv::FileStorage::WRITE);
     if (!file.isOpened()) {
         throw std::runtime_error("Could not write the camera parameter file: " + filename);
@@ -121,7 +121,7 @@ void ProjectiveCamera::writeCameraParameters(const std::string &filename) {
     file.release();
 }
 
-void ProjectiveCamera::readMarkerBitmap(const std::string &bitmapFilename) {
+void ThinLensCamera::readMarkerBitmap(const std::string &bitmapFilename) {
     markerBitmap = cv::imread(bitmapFilename, cv::IMREAD_GRAYSCALE);
     if (markerBitmap.empty()) {
         throw std::runtime_error("Could not find or read the marker bitmap: " + bitmapFilename);
@@ -130,12 +130,12 @@ void ProjectiveCamera::readMarkerBitmap(const std::string &bitmapFilename) {
     cv::normalize(markerBitmap, markerBitmap, 1.0, 0, cv::NORM_MINMAX);
 }
 
-std::ostream &operator<<(std::ostream &os, const ProjectiveCamera &camera) {
-    os << camera.model << " " << camera.imageWidth << "x" << camera.imageHeight << " " << camera.bitDepth << "bits f/" << camera.fNumber << " fd:" << camera.focusDistance << camera.unit;
+std::ostream &operator<<(std::ostream &os, const ThinLensCamera &camera) {
+    os << camera.model << " " << camera.imageWidth << "x" << camera.imageHeight << " " << camera.bitDepth << "bits f/" << camera.fNumber << " fd:" << camera.focusDistance << camera.unit << "(thin-lens camera model)";
     return os;
 }
 
-void ProjectiveCamera::computeFrameTransforms(const cv::Vec3d &rvec, const cv::Vec3d &tvec) {
+void ThinLensCamera::computeFrameTransforms(const cv::Vec3d &rvec, const cv::Vec3d &tvec) {
     cTm.setIdentity();
     cTm(0, 3) = tvec(0);
     cTm(1, 3) = tvec(1);
@@ -155,7 +155,7 @@ void ProjectiveCamera::computeFrameTransforms(const cv::Vec3d &rvec, const cv::V
     mTc = cTm.inverse();
 }
 
-void ProjectiveCamera::computeRayTracingMetricParameters() {
+void ThinLensCamera::computeRayTracingMetricParameters() {
 
     maxIntensityValue = 1 << bitDepth;
 
@@ -183,7 +183,7 @@ void ProjectiveCamera::computeRayTracingMetricParameters() {
     inverseRectificationCoeff = focusDistance / (focusDistance - focalLength);
 }
 
-void ProjectiveCamera::computeRegionOfInterest(const cv::Vec3d &rvec, const cv::Vec3d &tvec) {
+void ThinLensCamera::computeRegionOfInterest(const cv::Vec3d &rvec, const cv::Vec3d &tvec) {
     std::vector<cv::Point3d> markerCorners(4);
     markerCorners[0] = cv::Point3d(0.0 - markerOriginX, 0.0 - markerOriginY, 0.0);
     markerCorners[1] = cv::Point3d(markerWidth - markerOriginX, 0.0 - markerOriginY, 0.0);
@@ -225,7 +225,7 @@ void ProjectiveCamera::computeRegionOfInterest(const cv::Vec3d &rvec, const cv::
     }
 }
 
-void ProjectiveCamera::computeSharpImageAndDepthMap() {
+void ThinLensCamera::computeSharpImageAndDepthMap() {
     minPatternDistance = DBL_MAX;
     maxPatternDistance = -DBL_MAX;
 
@@ -267,7 +267,7 @@ void ProjectiveCamera::computeSharpImageAndDepthMap() {
     }
 }
 
-void ProjectiveCamera::computeEdgeMaps() {
+void ThinLensCamera::computeEdgeMaps() {
     edgeMap = cv::Mat::ones(cv::Size(imageWidth, imageHeight), CV_8U) * 255;
     distanceToEdgeMap = cv::Mat::zeros(cv::Size(imageWidth, imageHeight), CV_32F);
 
@@ -285,7 +285,7 @@ void ProjectiveCamera::computeEdgeMaps() {
     cv::distanceTransform(edgeMap(cv::Rect(colMin, rowMin, colMax - colMin, rowMax - rowMin)), distanceToEdgeMap(cv::Rect(colMin, rowMin, colMax - colMin, rowMax - rowMin)), cv::DIST_L2, 0);
 }
 
-void ProjectiveCamera::refineImageWithAdaptiveSampling() {
+void ThinLensCamera::refineImageWithAdaptiveSampling() {
     int sqrtNbRays = sqrt(maxIntensityValue);
 
 #pragma omp parallel for num_threads(omp_get_num_procs())
@@ -335,13 +335,13 @@ void ProjectiveCamera::refineImageWithAdaptiveSampling() {
     }
 }
 
-void ProjectiveCamera::addDiffractionBlur() {
+void ThinLensCamera::addDiffractionBlur() {
     double sigma = airyDiskRadiusInPixels() / 3.0;
     int kernelSize = 2 * (int)(sigma + 1.0) + 1;
     cv::GaussianBlur(intensityMap, intensityMap, cv::Size(kernelSize, kernelSize), sigma);
 }
 
-void ProjectiveCamera::quantifyOutputImage(cv::Mat &outputImage) {
+void ThinLensCamera::quantifyOutputImage(cv::Mat &outputImage) {
     if (bitDepth <= 8) {
         intensityMap.convertTo(outputImage, CV_8U, maxIntensityValue);
     } else {

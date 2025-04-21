@@ -1,4 +1,4 @@
-#include "ProjectiveCamera.hpp"
+#include "ThinLensCamera.hpp"
 #include "PoseCloud.hpp"
 
 using namespace cv;
@@ -7,7 +7,7 @@ using namespace std;
 int main() {
 
     cout << "Loading configuration files..." << endl;
-    ProjectiveCamera camera("data/aruco/left_camera.yml", "data/aruco/aruco.png");
+    ThinLensCamera camera("data/aruco/left_camera.yml", "data/aruco/aruco.png");
     cout << "Camera: " << camera << endl;
     
     cout << "Drawing marker locations..." << endl;

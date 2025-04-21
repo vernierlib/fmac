@@ -1,4 +1,4 @@
-#include "ProjectiveCamera.hpp"
+#include "ThinLensCamera.hpp"
 #include <opencv2/objdetect/aruco_detector.hpp>
 
 using namespace cv;
@@ -7,7 +7,7 @@ using namespace std;
 int main() {
 
     cout << "Loading configuration files..." << endl;
-    ProjectiveCamera camera("data/aruco/left_camera.yml", "data/aruco/aruco.png");
+    ThinLensCamera camera("data/aruco/left_camera.yml", "data/aruco/aruco.png");
 
     cout << "Rendering..." << endl;
     cv::Mat rvec = (Mat_<double>(1, 3) << 0.54395, -0.0622605, -0.137385);

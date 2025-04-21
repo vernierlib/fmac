@@ -1,4 +1,4 @@
-#include "ProjectiveCamera.hpp"
+#include "ThinLensCamera.hpp"
 
 using namespace cv;
 using namespace std;
@@ -6,7 +6,7 @@ using namespace std;
 int main() {
 
     cout << "Loading configuration files..." << endl;
-    ProjectiveCamera camera("data/opencv/left_camera.yml", "data/opencv/chessboard.png");
+    ThinLensCamera camera("data/opencv/left_camera.yml", "data/opencv/chessboard.png");
     cout << "Camera: " << camera << endl;
 
     cv::FileStorage file("data/opencv/left_camera.yml", cv::FileStorage::READ);
