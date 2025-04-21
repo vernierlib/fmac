@@ -7,14 +7,16 @@ using namespace std;
 int main() {
 
     cout << "Loading configuration files..." << endl;
-    ProjectiveCamera camera("data/aruco/cameraParameters.yml", "data/aruco/aruco.png");
+    ProjectiveCamera camera("data/aruco/left_camera.yml", "data/aruco/aruco.png");
 
     cout << "Rendering..." << endl;
-    cv::Mat rvec = cv::Mat(1, 3, CV_64F, {0.0, 0.0, 0.0});
-    cv::Mat tvec = cv::Mat(1, 3, CV_64F, {0.0, 0.0, 0.4});
+    cv::Mat rvec = (Mat_<double>(1, 3) << 0.54395, -0.0622605, -0.137385);
+    cv::Mat tvec = (Mat_<double>(1, 3) << 0.0, 0.0, 0.1);
     Mat image;
     camera.render(rvec, tvec, image);
-
+    Mat imageRGB;
+    merge(std::vector<Mat>({image, image, image}), imageRGB);
+    
     cout << "Detecting..." << endl;
 
     std::vector<int> markerIds;
@@ -48,14 +50,12 @@ int main() {
         cout << "Initial tvec:   " << tvec << endl;
         cout << "Estimated tvec: " << tvec2 << endl;
 
-        Mat imageRGB;
-        merge(std::vector<Mat>({image, image, image}), imageRGB);
         cv::aruco::drawDetectedMarkers(imageRGB, markerCorners, markerIds);
         cv::drawFrameAxes(imageRGB, camera.cameraMatrix, camera.distortionCoefficients, rvec2, tvec2, camera.markerWidth * 1.5, 2);
-
-        imshow("Rendered image", imageRGB);
-        waitKey(0);
     }
+
+    imshow("Rendered image", imageRGB);
+    waitKey(0);
 
     return 0;
 }

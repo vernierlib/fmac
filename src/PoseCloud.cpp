@@ -89,7 +89,7 @@ std::ostream &operator<<(std::ostream &os, const PoseCloud &cloud) {
 
 void PoseCloud::printPoses() {
     for (int k = 0; k < rpy.rows; k++) {
-        std::cout << "yaw: " << rpy.at<double>(k, 2) << ", pitch: " << rpy.at<double>(k, 1) << ", roll: " << rpy.at<double>(k, 0) << ", x: " << tvec.at<double>(k, 0) << ", y: " << tvec.at<double>(k, 1) << ", z: " << tvec.at<double>(k, 2) << std::endl;
+        std::cout << "[" << k << "] yaw: " << rpy.at<double>(k, 2) << ", pitch: " << rpy.at<double>(k, 1) << ", roll: " << rpy.at<double>(k, 0) << ", x: " << tvec.at<double>(k, 0) << ", y: " << tvec.at<double>(k, 1) << ", z: " << tvec.at<double>(k, 2) << std::endl;
     }
 }
 

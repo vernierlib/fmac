@@ -25,6 +25,8 @@ int main() {
         Mat image;
         for (int k = 0; k < cloud.getPoseCount(); k++) {
             cout << "Rendering image " << k + 1 << "/" << cloud.getPoseCount() << "..." << endl;
+            cout << "RVec " << cloud.getRVec(k) << endl;
+            cout << "TVec " << cloud.getTVec(k) << endl;            
             camera.render(cloud.getRVec(k), cloud.getTVec(k), image);
             imwrite("data/aruco/image" + to_string(k + 1) + ".png", image);
             imshow("Rendered image", image);
