@@ -9,12 +9,14 @@
 ThinLensCamera::ThinLensCamera(const std::string &ymlFilename, const std::string &bitmapFilename) {
     readCameraParameters(ymlFilename);
     readMarkerBitmap(bitmapFilename);
+    checkParameters();
+    computeRayTracingMetricParameters();
 }
 
 void ThinLensCamera::render(const cv::Vec3d &rvec, const cv::Vec3d &tvec, cv::Mat &outputImage) {
     checkParameters();
-    computeFrameTransforms(rvec, tvec);
     computeRayTracingMetricParameters();
+    computeFrameTransforms(rvec, tvec);
     computeRegionOfInterest(rvec, tvec);
     computeSharpImageAndDepthMap();
     computeEdgeMaps();
@@ -127,12 +129,24 @@ void ThinLensCamera::readMarkerBitmap(const std::string &bitmapFilename) {
         throw std::runtime_error("Could not find or read the marker bitmap: " + bitmapFilename);
     }
     markerBitmap.convertTo(markerBitmap, CV_64F, 1);
-    cv::normalize(markerBitmap, markerBitmap, 1.0, 0, cv::NORM_MINMAX);
+    cv::normalize(markerBitmap, markerBitmap, 1.0, 0, cv::NORM_MINMAX);   
 }
 
-std::ostream &operator<<(std::ostream &os, const ThinLensCamera &camera) {
-    os << camera.model << " " << camera.imageWidth << "x" << camera.imageHeight << " " << camera.bitDepth << "bits f/" << camera.fNumber << " fd:" << camera.focusDistance << camera.unit << "(thin-lens camera model)";
-    return os;
+void ThinLensCamera::computeRayTracingMetricParameters() {
+
+    maxIntensityValue = 1 << bitDepth;
+
+    principalPointX = cameraMatrix.at<double>(0, 2);
+    principalPointY = cameraMatrix.at<double>(1, 2);
+
+    focalLength = 0.5 * pixelPitch * (cameraMatrix.at<double>(0, 0) + cameraMatrix.at<double>(1, 1));
+    lensRadius = 0.5 * focalLength / fNumber;
+    lensToSensorDistance = focalLength * focusDistance / (focusDistance - focalLength);
+
+    focusDistanceOverLensToSensorDistance = focusDistance / lensToSensorDistance; 
+    
+    markerPixelWidth = markerWidth / markerBitmap.cols;
+    markerPixelHeight = markerHeight / markerBitmap.rows;
 }
 
 void ThinLensCamera::computeFrameTransforms(const cv::Vec3d &rvec, const cv::Vec3d &tvec) {
@@ -153,26 +167,10 @@ void ThinLensCamera::computeFrameTransforms(const cv::Vec3d &rvec, const cv::Vec
     cTm(2, 2) = rotationMatrix.at<double>(2, 2);
     // cTm.block<3,3>(0,0)=cTm.block<3,3>(0,0) * Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitX());
     mTc = cTm.inverse();
-}
-
-void ThinLensCamera::computeRayTracingMetricParameters() {
-
-    maxIntensityValue = 1 << bitDepth;
-
-    principalPointX = cameraMatrix.at<double>(0, 2);
-    principalPointY = cameraMatrix.at<double>(1, 2);
-
-    focalLength = 0.5 * pixelPitch * (cameraMatrix.at<double>(0, 0) + cameraMatrix.at<double>(1, 1));
-    lensRadius = 0.5 * focalLength / fNumber;
-    lensToSensorDistance = focalLength * focusDistance / (focusDistance - focalLength);
-
-    markerPixelWidth = markerWidth / markerBitmap.cols;
-    markerPixelHeight = markerHeight / markerBitmap.rows;
-
+    
     markerNormal = Eigen::Vector3d(mTc(2, 0), mTc(2, 1), mTc(2, 2));
     markerDistance = mTc(2, 3);
-    focusDistanceOverLensToSensorDistance = focusDistance / lensToSensorDistance;
-
+    
     Eigen::Vector3d rayDirection(0.0, 0.0, 1.0);
     double cosAngle = markerNormal.dot(rayDirection);
     if (cosAngle < cos(MAX_TILT_ANGLE_IN_DEG * M_PI / 180.0)) {
@@ -210,10 +208,10 @@ void ThinLensCamera::computeRegionOfInterest(const cv::Vec3d &rvec, const cv::Ve
     }
     maxConfusionRadius = std::max(maxConfusionRadius + 1.0, MIN_PIXEL_MARGIN);
 
-    colMin -= (int)(maxConfusionRadius);
-    colMax += (int)(maxConfusionRadius);
-    rowMin -= (int)(maxConfusionRadius);
-    rowMax += (int)(maxConfusionRadius);
+    colMin -= (int) (maxConfusionRadius);
+    colMax += (int) (maxConfusionRadius);
+    rowMin -= (int) (maxConfusionRadius);
+    rowMax += (int) (maxConfusionRadius);
 
     colMin = std::max(0, colMin);
     colMax = std::min(imageWidth, colMax);
@@ -279,7 +277,7 @@ void ThinLensCamera::computeEdgeMaps() {
             double deltaUp = std::fabs(intensityMap.at<double>(row, col) - intensityMap.at<double>(row - 1, col));
             double deltaDown = std::fabs(intensityMap.at<double>(row + 1, col) - intensityMap.at<double>(row, col));
             double deltaMax = std::max(std::max(deltaLeft, deltaRight), std::max(deltaUp, deltaDown));
-            edgeMap.at<char>(row, col) = (char)(255 - 255 * deltaMax);
+            edgeMap.at<char>(row, col) = (char) (255 - 255 * deltaMax);
         }
     }
     cv::distanceTransform(edgeMap(cv::Rect(colMin, rowMin, colMax - colMin, rowMax - rowMin)), distanceToEdgeMap(cv::Rect(colMin, rowMin, colMax - colMin, rowMax - rowMin)), cv::DIST_L2, 0);
@@ -337,7 +335,7 @@ void ThinLensCamera::refineImageWithAdaptiveSampling() {
 
 void ThinLensCamera::addDiffractionBlur() {
     double sigma = airyDiskRadiusInPixels() / 3.0;
-    int kernelSize = 2 * (int)(sigma + 1.0) + 1;
+    int kernelSize = 2 * (int) (sigma + 1.0) + 1;
     cv::GaussianBlur(intensityMap, intensityMap, cv::Size(kernelSize, kernelSize), sigma);
 }
 
@@ -348,3 +346,9 @@ void ThinLensCamera::quantifyOutputImage(cv::Mat &outputImage) {
         intensityMap.convertTo(outputImage, CV_16U, maxIntensityValue);
     }
 }
+
+std::ostream &operator<<(std::ostream &os, const ThinLensCamera &camera) {
+    os << "Thin-lens camera: " << camera.model << " " << camera.imageWidth << "x" << camera.imageHeight << " " << camera.bitDepth << "bits with objective lens " << camera.focalLength << camera.unit << " f/" << camera.fNumber << " fd:" << camera.focusDistance << camera.unit;
+    return os;
+}
+

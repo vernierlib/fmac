@@ -8,14 +8,14 @@ int main() {
 
     cout << "Loading configuration files..." << endl;
     ThinLensCamera camera("data/aruco/left_camera.yml", "data/aruco/aruco.png");
+    cout << camera << endl;
 
     cout << "Rendering..." << endl;
     cv::Mat rvec = (Mat_<double>(1, 3) << 0.54395, -0.0622605, -0.137385);
-    cv::Mat tvec = (Mat_<double>(1, 3) << 0.0, 0.0, 0.1);
+    cv::Mat tvec = (Mat_<double>(1, 3) << 0.01, 0.02, 0.1);
+    
     Mat image;
     camera.render(rvec, tvec, image);
-    Mat imageRGB;
-    merge(std::vector<Mat>({image, image, image}), imageRGB);
     
     cout << "Detecting..." << endl;
 
@@ -30,6 +30,9 @@ int main() {
     cv::aruco::ArucoDetector detector(dictionary, detectorParams);
     detector.detectMarkers(image, markerCorners, markerIds, rejectedCandidates);
 
+    Mat imageRGB;
+    merge(std::vector<Mat>({image, image, image}), imageRGB);
+    
     if (!markerIds.empty()) {
         cout << "Marker id: " << markerIds[0] << endl;
         cout << "Marker corners: " << markerCorners[0][0] << ", " << markerCorners[0][1] << ", " << markerCorners[0][2] << ", " << markerCorners[0][3] << endl;

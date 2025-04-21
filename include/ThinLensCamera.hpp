@@ -94,7 +94,7 @@ public:
         return 1.22 * lightWaveLength * fNumber / pixelPitch;
     }
 
-private:
+protected:
     // Work variables
     Eigen::Matrix4d cTm;
     Eigen::Matrix4d mTc;
