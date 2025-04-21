@@ -61,30 +61,30 @@ public:
 
     ThinLensCamera(const std::string &ymlFilename, const std::string &bitmapFilename);
 
-    void render(const cv::Vec3d &rvec, const cv::Vec3d &tvec, cv::Mat &outputImage);
+    virtual void render(const cv::Vec3d &rvec, const cv::Vec3d &tvec, cv::Mat &outputImage);
 
-    void showMaps();
+    virtual void showMaps();
 
     /**
      * @brief Read camera paremeters in a XML/YAML/JSON file.
      *
      * @param filename Name of the file to open or the text string to read the data from. Extension of the file (.xml, .yml/.yaml or .json) determines its format (XML, YAML or JSON respectively). Also you can append .gz to work with compressed files, for example myHugeMatrix.xml.gz
      */
-    void readCameraParameters(const std::string &filename);
+    virtual void readCameraParameters(const std::string &filename);
 
     /**
      * @brief Writes camera paremeters in a XML/YAML/JSON file.
      *
      * @param filename Name of the file to open or the text string to read the data from. Extension of the file (.xml, .yml/.yaml or .json) determines its format (XML, YAML or JSON respectively). Also you can append .gz to work with compressed files, for example myHugeMatrix.xml.gz
      */
-    void writeCameraParameters(const std::string &filename);
+    virtual void writeCameraParameters(const std::string &filename);
 
     /**
      * @brief Loads a bitmap of a marker from the specified file. See the OpenCV documentation to know the supported file formats.
      *
      * @param bitmapFilename filename of the bitmap of a marker
      */
-    void readMarkerBitmap(const std::string &bitmapFilename);
+    virtual void readMarkerBitmap(const std::string &bitmapFilename);
 
     inline double circleOfConfusionRadiusInPixels(double objectDistance) {
         return std::fabs(lensRadius * focalLength * (objectDistance - focusDistance) / objectDistance / (focalLength + focusDistance) / pixelPitch);
@@ -109,23 +109,23 @@ protected:
     cv::Mat rotationMatrix;
     double inverseRectificationCoeff;
 
-    void checkParameters();
+    virtual void checkParameters();
 
-    void computeFrameTransforms(const cv::Vec3d &rvec, const cv::Vec3d &tvec);
+    virtual void computeFrameTransforms(const cv::Vec3d &rvec, const cv::Vec3d &tvec);
 
-    void computeRegionOfInterest(const cv::Vec3d &rvec, const cv::Vec3d &tvec);
+    virtual void computeRegionOfInterest(const cv::Vec3d &rvec, const cv::Vec3d &tvec);
 
-    void computeRayTracingMetricParameters();
+    virtual void computeRayTracingMetricParameters();
 
-    void computeSharpImageAndDepthMap();
+    virtual void computeSharpImageAndDepthMap();
 
-    void computeEdgeMaps();
+    virtual void computeEdgeMaps();
 
-    void refineImageWithAdaptiveSampling();
+    virtual void refineImageWithAdaptiveSampling();
 
-    void addDiffractionBlur();
+    virtual void addDiffractionBlur();
 
-    void quantifyOutputImage(cv::Mat &outputImage);
+    virtual void quantifyOutputImage(cv::Mat &outputImage);
 
     inline void concentricMapping(double &ux, double &uy) {
         if (ux != 0.0 || uy != 0.0) {

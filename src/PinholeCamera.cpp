@@ -12,8 +12,8 @@ PinholeCamera::PinholeCamera(const std::string &ymlFilename, const std::string &
 
 void PinholeCamera::render(const cv::Vec3d &rvec, const cv::Vec3d &tvec, cv::Mat &outputImage) {
     checkParameters();
-    computeFrameTransforms(rvec, tvec);
     computeRayTracingMetricParameters();
+    computeFrameTransforms(rvec, tvec);
     computeRegionOfInterest(rvec, tvec);
     computeSharpImageAndDepthMap();
     //computeEdgeMaps();
@@ -23,7 +23,7 @@ void PinholeCamera::render(const cv::Vec3d &rvec, const cv::Vec3d &tvec, cv::Mat
 }
 
 std::ostream &operator<<(std::ostream &os, const PinholeCamera &camera) {
-    os << "Pinhole camera: " << camera.model << " " << camera.imageWidth << "x" << camera.imageHeight << " " << camera.bitDepth << "bits f/" << camera.fNumber << " fd:" << camera.focusDistance << camera.unit;
+    os << "Pinhole camera: " << camera.model << " " << camera.imageWidth << "x" << camera.imageHeight << " " << camera.bitDepth << "bits with objective lens " << camera.focalLength << camera.unit << " f/" << camera.fNumber << " fd:" << camera.focusDistance << camera.unit;
     return os;
 }
 

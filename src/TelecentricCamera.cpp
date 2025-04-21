@@ -167,6 +167,6 @@ void TelecentricCamera::refineImageWithAdaptiveSampling() {
 }
 
 std::ostream &operator<<(std::ostream &os, const TelecentricCamera &camera) {
-    os << "Telecentric camera: " << camera.model << " " << camera.imageWidth << "x" << camera.imageHeight << " " << camera.bitDepth << "bits f/" << camera.fNumber << " fd:" << camera.focusDistance << camera.unit;
+    os << "Telecentric camera: " << camera.model << " " << camera.imageWidth << "x" << camera.imageHeight << " " << camera.bitDepth << "bits with objective lens " << camera.focalLength << camera.unit << " f/" << camera.fNumber << " fd:" << camera.focusDistance << camera.unit;
     return os;
 }
