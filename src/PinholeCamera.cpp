@@ -23,7 +23,7 @@ void PinholeCamera::render(const cv::Vec3d &rvec, const cv::Vec3d &tvec, cv::Mat
 }
 
 std::ostream &operator<<(std::ostream &os, const PinholeCamera &camera) {
-    os << "Pinhole camera: " << camera.model << " " << camera.imageWidth << "x" << camera.imageHeight << " " << camera.bitDepth << "bits with objective lens " << camera.focalLength << camera.unit << " f/" << camera.fNumber << " fd:" << camera.focusDistance << camera.unit;
+    os << "Pinhole camera model based on " << camera.brand << " " << camera.imageWidth << "x" << camera.imageHeight << " " << camera.bitDepth << "-bits with objective lens " << camera.focalLength << camera.unit << " f/" << camera.fNumber << " fd:" << camera.focusDistance << camera.unit;
     return os;
 }
 

@@ -79,8 +79,10 @@ void TelecentricCamera::computeSharpImageAndDepthMap() {
 
             countMap.at<int>(row, col) = 1;
 
-            double xSensor = (col - principalPointX ) * pixelPitch;
-            double ySensor = (row - principalPointY ) * pixelPitch;
+            // double xSensor = (col - principalPointX ) * pixelPitch;
+            // double ySensor = (row - principalPointY ) * pixelPitch;
+            double xSensor = (distortionMapX.at<float>(row, col) - principalPointX) * pixelPitch * inverseRectificationCoeff;
+            double ySensor = (distortionMapY.at<float>(row, col) - principalPointY) * pixelPitch * inverseRectificationCoeff;
             Eigen::Vector3d raysCrossingPoint(xSensor * focusDistanceOverLensToSensorDistance, ySensor * focusDistanceOverLensToSensorDistance, focusDistance);
 
             Eigen::Vector3d lensPoint(raysCrossingPoint.x(), raysCrossingPoint.y(), 0.0);
@@ -129,8 +131,10 @@ void TelecentricCamera::refineImageWithAdaptiveSampling() {
                         double rx = sobol::sample(colLens + (rowLens * sqrtNbRays), 1) - 0.5;
                         double ry = sobol::sample(colLens + (rowLens * sqrtNbRays), 2) - 0.5;
 
-                        double xSensor = (col - principalPointX + rx) * pixelPitch;
-                        double ySensor = (row - principalPointY + ry) * pixelPitch;
+                        //double xSensor = (col - principalPointX + rx) * pixelPitch;
+                        //double ySensor = (row - principalPointY + ry) * pixelPitch;
+                        double xSensor = (distortionMapX.at<float>(row, col) - principalPointX + rx) * pixelPitch * inverseRectificationCoeff;
+                        double ySensor = (distortionMapY.at<float>(row, col) - principalPointY + ry) * pixelPitch * inverseRectificationCoeff;
                         Eigen::Vector3d raysCrossingPoint(xSensor * focusDistanceOverLensToSensorDistance, ySensor * focusDistanceOverLensToSensorDistance, focusDistance);
 
                         Eigen::Vector3d stopPoint(lensRadius * (colLens * 2.0 / (sqrtNbRays - 1) - 1.0), lensRadius * (rowLens * 2.0 / (sqrtNbRays - 1) - 1.0), 0.0);
@@ -167,6 +171,6 @@ void TelecentricCamera::refineImageWithAdaptiveSampling() {
 }
 
 std::ostream &operator<<(std::ostream &os, const TelecentricCamera &camera) {
-    os << "Telecentric camera: " << camera.model << " " << camera.imageWidth << "x" << camera.imageHeight << " " << camera.bitDepth << "bits with objective lens " << camera.focalLength << camera.unit << " f/" << camera.fNumber << " fd:" << camera.focusDistance << camera.unit;
+    os << "Telecentric camera model based on " << camera.brand << " " << camera.imageWidth << "x" << camera.imageHeight << " " << camera.bitDepth << "-bits with objective lens " << camera.focalLength << camera.unit << " f/" << camera.fNumber << " fd:" << camera.focusDistance << camera.unit;
     return os;
 }

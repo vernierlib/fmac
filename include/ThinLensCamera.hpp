@@ -56,8 +56,7 @@ public:
     // Other parameters
     double MAX_TILT_ANGLE_IN_DEG = 89.99;
     double MIN_PIXEL_MARGIN = 3.0;
-    std::string model = "";
-    std::string objectiveLens = "";
+    std::string brand = "";
 
     ThinLensCamera(const std::string &ymlFilename, const std::string &bitmapFilename);
 

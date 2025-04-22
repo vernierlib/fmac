@@ -76,8 +76,7 @@ void ThinLensCamera::readCameraParameters(const std::string &filename) {
     file["light_wavelength"] >> lightWaveLength;
     file["background_intensity"] >> backgroundIntensity;
     file["unit"] >> unit;
-    file["model"] >> model;
-    file["objective_lens"] >> objectiveLens;
+    file["brand"] >> brand;
     file.release();
 }
 
@@ -118,8 +117,7 @@ void ThinLensCamera::writeCameraParameters(const std::string &filename) {
     file << "light_wavelength" << lightWaveLength;
     file << "background_intensity" << backgroundIntensity;
     file << "unit" << unit;
-    file << "model" << model;
-    file << "objective_lens" << objectiveLens;
+    file << "brand" << brand;
     file.release();
 }
 
@@ -348,7 +346,7 @@ void ThinLensCamera::quantifyOutputImage(cv::Mat &outputImage) {
 }
 
 std::ostream &operator<<(std::ostream &os, const ThinLensCamera &camera) {
-    os << "Thin-lens camera: " << camera.model << " " << camera.imageWidth << "x" << camera.imageHeight << " " << camera.bitDepth << "bits with objective lens " << camera.focalLength << camera.unit << " f/" << camera.fNumber << " fd:" << camera.focusDistance << camera.unit;
+    os << "Thin-lens camera model based on " << camera.brand << " " << camera.imageWidth << "x" << camera.imageHeight << " " << camera.bitDepth << "-bits with objective lens " << camera.focalLength << camera.unit << " f/" << camera.fNumber << " fd:" << camera.focusDistance << camera.unit;
     return os;
 }
 
