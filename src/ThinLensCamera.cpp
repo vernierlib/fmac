@@ -333,7 +333,10 @@ void ThinLensCamera::refineImageWithAdaptiveSampling() {
 
 void ThinLensCamera::addDiffractionBlur() {
     double sigma = airyDiskRadiusInPixels() / 3.0;
-    int kernelSize = 2 * (int) (sigma + 1.0) + 1;
+    int kernelSize = (int) (6*sigma);
+    if (kernelSize%2==0) {
+        kernelSize++;
+    }
     cv::GaussianBlur(intensityMap, intensityMap, cv::Size(kernelSize, kernelSize), sigma);
 }
 
@@ -345,12 +348,57 @@ void ThinLensCamera::quantifyOutputImage(cv::Mat &outputImage) {
     }
 }
 
+double ThinLensCamera::airyDiskRadiusInPixels() const {
+    return 1.22 * lightWaveLength * fNumber / pixelPitch;
+}
+
+double ThinLensCamera::angleOfViewInDeg() const {
+    double diagonal = pixelPitch * sqrt(imageHeight * imageHeight + imageWidth * imageWidth);
+    return 360 * atan2(diagonal, 2 * focalLength) / M_PI;
+}
+
+double ThinLensCamera::depthOfField() const {
+    return farDepthOfFieldLimit() - nearDepthOfFieldLimit();
+}
+
+double ThinLensCamera::hyperfocalDistance() const {
+    return focalLength * focalLength / fNumber / pixelPitch;
+}
+
+double ThinLensCamera::nearDepthOfFieldLimit() const {
+    double hyperfocalDistance = focalLength * focalLength / fNumber / pixelPitch;
+    return hyperfocalDistance * focusDistance / (hyperfocalDistance + focusDistance);
+}
+
+double ThinLensCamera::farDepthOfFieldLimit() const {
+    double hyperfocalDistance = focalLength * focalLength / fNumber / pixelPitch;
+    if (hyperfocalDistance > focusDistance) {
+        return hyperfocalDistance * focusDistance / (hyperfocalDistance - focusDistance);
+    } else {
+        return INFINITY;
+    }
+}
+
 std::string ThinLensCamera::toString() const {
     std::ostringstream os;
-    os << brand << " " << imageWidth << "x" << imageHeight << " " << bitDepth << "-bits"
-            << " with focal length " << focalLength << unit
-            << ", aperture f/" << fNumber
-            << ", and focus distance :" << focusDistance << unit;
+    //    os << brand << " " << imageWidth << "x" << imageHeight << " " << bitDepth << "-bits"
+    //            << " with focal length of " << focalLength << unit
+    //            << ", aperture of f/" << fNumber
+    //            << ", and focus distance at " << focusDistance << unit;
+    os << brand << std::endl;
+    os << "  | resolution: " << imageWidth << "x" << imageHeight << " px" << std::endl;
+    os << "  | pixel pitch: " << pixelPitch << " " << unit << std::endl;
+    os << "  | color depth: " << bitDepth << " bits" << std::endl;
+    os << "  | focal length: " << focalLength << " " << unit << std::endl;
+    os << "  | angle of view: " << angleOfViewInDeg() << " deg" << std::endl;
+    os << "  | f-number: " << fNumber << std::endl;
+    os << "  | aperture: " << focalLength / fNumber << " " << unit << std::endl;
+    os << "  | focus distance: " << focusDistance << " " << unit << std::endl;
+    os << "  | hyperfocal distance: " << hyperfocalDistance() << " " << unit << std::endl;
+    os << "  | near depth of field limit: " << nearDepthOfFieldLimit() << " " << unit << std::endl;
+    os << "  | far depth of field limit: " << farDepthOfFieldLimit() << " " << unit << std::endl;
+    os << "  | airy disk radius: " << airyDiskRadiusInPixels() << " px" << std::endl;
+
     return os.str();
 }
 

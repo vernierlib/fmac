@@ -7,7 +7,7 @@ int main() {
 
     cout << "Loading configuration files..." << endl;
     ThinLensCamera camera("data/opencv/left_camera.yml", "data/opencv/chessboard.png");
-    cout << "Camera: " << camera << endl;
+    cout << camera;
 
     cv::FileStorage file("data/opencv/left_camera.yml", cv::FileStorage::READ);
     if (!file.isOpened()) {

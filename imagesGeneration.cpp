@@ -8,7 +8,7 @@ int main() {
 
     cout << "Loading configuration files..." << endl;
     ThinLensCamera camera("data/aruco/left_camera.yml", "data/aruco/aruco.png");
-    cout << "Camera: " << camera << endl;
+    cout << camera;
     
     cout << "Drawing marker locations..." << endl;
     PoseCloud cloud("data/aruco/cloud.yml");

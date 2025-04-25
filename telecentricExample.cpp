@@ -7,8 +7,8 @@ using namespace std;
 int main() {
 
     cout << "Loading configuration files..." << endl;
-    TelecentricCamera camera("data/aruco/telecentricCamera.yml", "data/aruco/aruco.png");
-    cout << camera << endl;
+    TelecentricCamera camera("data/matlab/telecentricCamera.yml", "data/aruco/aruco.png");
+    cout << camera;
     
     cout << "Rendering..." << endl;
     cv::Mat rvec = (Mat_<double>(1, 3) << 0.54395, -0.0622605, -0.137385);
@@ -16,7 +16,7 @@ int main() {
     
     Mat image;
     camera.render(rvec, tvec, image);
-
+    
     imshow("Rendered image", image);
     waitKey(0);
 

@@ -7,7 +7,7 @@ int main() {
 
     cout << "Loading configuration files..." << endl;
     ThinLensCamera camera("data/matlab/canonCamera.yml", "data/matlab/checkerboard.png");
-    cout << "Camera: " << camera << endl;
+    cout << camera;
 
     cv::FileStorage file("data/matlab/canonCamera.yml", cv::FileStorage::READ);
     if (!file.isOpened()) {
@@ -26,14 +26,12 @@ int main() {
     cout << "Rendering... (may take several minutes)" << endl;
     camera.render(rvec, tvec, image);
 
-    cout << "Done!" << endl;
-    cout << "Focal length: " << camera.focalLength << " " << camera.unit << endl;
-    cout << "Minimun pattern depth: " << camera.minPatternDistance << " " << camera.unit << endl;
-    cout << "Maximum pattern depth: " << camera.maxPatternDistance << " " << camera.unit << endl;
-    cout << "Minimun radius of the circle of confusion: " << camera.circleOfConfusionRadiusInPixels(camera.minPatternDistance) << " px" << endl;
-    cout << "Maximum radius of the circle of confusion: " << camera.circleOfConfusionRadiusInPixels(camera.maxPatternDistance) << " px" << endl;
-    cout << "Airy disk radius: " << camera.airyDiskRadiusInPixels() << " px" << endl;
-
+    cout << "Done!" << endl << "Depth and blur results:" << endl;
+    cout << "  | minimum pattern depth: " << camera.minPatternDistance << " " << camera.unit << endl;
+    cout << "  | maximum pattern depth: " << camera.maxPatternDistance << " " << camera.unit << endl;
+    cout << "  | minimum radius of the circle of confusion: " << camera.circleOfConfusionRadiusInPixels(camera.minPatternDistance) << " px" << endl;
+    cout << "  | maximum radius of the circle of confusion: " << camera.circleOfConfusionRadiusInPixels(camera.maxPatternDistance) << " px" << endl;
+    
     camera.showMaps();
 
     image.convertTo(image, CV_64F);

@@ -89,10 +89,23 @@ public:
         return std::fabs(lensRadius * focalLength * (objectDistance - focusDistance) / objectDistance / (focalLength + focusDistance) / pixelPitch);
     }
 
-    inline double airyDiskRadiusInPixels() {
-        return 1.22 * lightWaveLength * fNumber / pixelPitch;
-    }
+    virtual double airyDiskRadiusInPixels() const;
+
+    /** Returns the angle of view measured diagonally. */
+    virtual double angleOfViewInDeg() const;
     
+    /** Returns the distance between the nearest and the farthest planes that are in acceptably sharp focus. */
+    virtual double depthOfField() const;
+    
+    /** Returns the distance from sharp foreground */
+    virtual double nearDepthOfFieldLimit() const;
+
+    /** Returns the distance from sharp background */
+    virtual double farDepthOfFieldLimit() const;
+    
+    /** Return the focus distance that maximize the depth of field */
+    virtual double hyperfocalDistance() const;
+
     virtual std::string toString() const;
 
 protected:
