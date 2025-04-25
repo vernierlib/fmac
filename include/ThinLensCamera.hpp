@@ -92,6 +92,8 @@ public:
     inline double airyDiskRadiusInPixels() {
         return 1.22 * lightWaveLength * fNumber / pixelPitch;
     }
+    
+    virtual std::string toString() const;
 
 protected:
     // Work variables

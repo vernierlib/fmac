@@ -127,7 +127,7 @@ void ThinLensCamera::readMarkerBitmap(const std::string &bitmapFilename) {
         throw std::runtime_error("Could not find or read the marker bitmap: " + bitmapFilename);
     }
     markerBitmap.convertTo(markerBitmap, CV_64F, 1);
-    cv::normalize(markerBitmap, markerBitmap, 1.0, 0, cv::NORM_MINMAX);   
+    cv::normalize(markerBitmap, markerBitmap, 1.0, 0, cv::NORM_MINMAX);
 }
 
 void ThinLensCamera::computeRayTracingMetricParameters() {
@@ -141,8 +141,8 @@ void ThinLensCamera::computeRayTracingMetricParameters() {
     lensRadius = 0.5 * focalLength / fNumber;
     lensToSensorDistance = focalLength * focusDistance / (focusDistance - focalLength);
 
-    focusDistanceOverLensToSensorDistance = focusDistance / lensToSensorDistance; 
-    
+    focusDistanceOverLensToSensorDistance = focusDistance / lensToSensorDistance;
+
     markerPixelWidth = markerWidth / markerBitmap.cols;
     markerPixelHeight = markerHeight / markerBitmap.rows;
 }
@@ -165,10 +165,10 @@ void ThinLensCamera::computeFrameTransforms(const cv::Vec3d &rvec, const cv::Vec
     cTm(2, 2) = rotationMatrix.at<double>(2, 2);
     // cTm.block<3,3>(0,0)=cTm.block<3,3>(0,0) * Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitX());
     mTc = cTm.inverse();
-    
+
     markerNormal = Eigen::Vector3d(mTc(2, 0), mTc(2, 1), mTc(2, 2));
     markerDistance = mTc(2, 3);
-    
+
     Eigen::Vector3d rayDirection(0.0, 0.0, 1.0);
     double cosAngle = markerNormal.dot(rayDirection);
     if (cosAngle < cos(MAX_TILT_ANGLE_IN_DEG * M_PI / 180.0)) {
@@ -345,8 +345,17 @@ void ThinLensCamera::quantifyOutputImage(cv::Mat &outputImage) {
     }
 }
 
+std::string ThinLensCamera::toString() const {
+    std::ostringstream os;
+    os << brand << " " << imageWidth << "x" << imageHeight << " " << bitDepth << "-bits"
+            << " with focal length " << focalLength << unit
+            << ", aperture f/" << fNumber
+            << ", and focus distance :" << focusDistance << unit;
+    return os.str();
+}
+
 std::ostream &operator<<(std::ostream &os, const ThinLensCamera &camera) {
-    os << "Thin-lens camera model based on " << camera.brand << " " << camera.imageWidth << "x" << camera.imageHeight << " " << camera.bitDepth << "-bits with objective lens " << camera.focalLength << camera.unit << " f/" << camera.fNumber << " fd:" << camera.focusDistance << camera.unit;
+    os << "Thin-lens camera model based on " << camera.toString();
     return os;
 }
 

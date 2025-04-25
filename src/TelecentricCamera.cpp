@@ -49,10 +49,10 @@ void TelecentricCamera::computeRegionOfInterest(const cv::Vec3d &rvec, const cv:
     }
     maxConfusionRadius = std::max(maxConfusionRadius + 1.0, MIN_PIXEL_MARGIN);
 
-    colMin -= (int)(maxConfusionRadius);
-    colMax += (int)(maxConfusionRadius);
-    rowMin -= (int)(maxConfusionRadius);
-    rowMax += (int)(maxConfusionRadius);
+    colMin -= (int) (maxConfusionRadius);
+    colMax += (int) (maxConfusionRadius);
+    rowMin -= (int) (maxConfusionRadius);
+    rowMax += (int) (maxConfusionRadius);
 
     colMin = std::max(0, colMin);
     colMax = std::min(imageWidth, colMax);
@@ -171,6 +171,6 @@ void TelecentricCamera::refineImageWithAdaptiveSampling() {
 }
 
 std::ostream &operator<<(std::ostream &os, const TelecentricCamera &camera) {
-    os << "Telecentric camera model based on " << camera.brand << " " << camera.imageWidth << "x" << camera.imageHeight << " " << camera.bitDepth << "-bits with objective lens " << camera.focalLength << camera.unit << " f/" << camera.fNumber << " fd:" << camera.focusDistance << camera.unit;
+    os << "Telecentric camera model based on " << camera.toString();
     return os;
 }
