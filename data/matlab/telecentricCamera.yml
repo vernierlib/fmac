@@ -5,10 +5,10 @@ bit_depth: 8
 pixel_pitch: 0.0057
 f_number: 16
 focus_distance: 700.
-marker_width: 30.
-marker_height: 30.
-marker_origin_x: 15.
-marker_origin_y: 15.
+marker_width: 290.
+marker_height: 203.
+marker_origin_x: 29.
+marker_origin_y: 29.
 light_wavelength: 0.0007
 background_intensity: 1.0
 unit: mm
