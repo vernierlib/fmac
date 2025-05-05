@@ -9,10 +9,14 @@ int main() {
     cout << "Loading configuration files..." << endl;
     ThinLensCamera camera("data/aruco/left_camera.yml", "data/aruco/aruco.png");
     cout << camera << endl;
+
     PoseCloud cloud("data/aruco/cloud.yml");
     cout << cloud << endl;
+
     cout << "Drawing marker locations..." << endl;
     Mat imageRGB(camera.imageHeight, camera.imageWidth, CV_8UC3);
+    cloud.draw(imageRGB, camera);
+
     cout << "Start rendering? (ESC to stop)" << endl;
     imshow("Location of markers", imageRGB);
     int keyCode = waitKey(0);
