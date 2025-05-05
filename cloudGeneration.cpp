@@ -4,33 +4,38 @@ using namespace cv;
 using namespace std;
 
 int main() {
+    
+    cout << "Loading configuration files..." << endl;
+    ThinLensCamera camera("data/aruco/left_camera.yml", "data/aruco/aruco.png");
+    cout << camera << endl;
 
     // Defining cloud limits
-    const double yawMin = -M_PI;
-    const double yawMax = -yawMin;
-    const double pitchMin = -M_PI / 4.0;
-    const double pitchMax = -pitchMin;
-    const double rollMin = -M_PI / 4.0;
-    const double rollMax = -rollMin;
-    const double xMin = -0.06;
-    const double xMax = -xMin;
-    const double yMin = -0.04;
-    const double yMax = -yMin;
-    const double zMin = 0.1;
-    const double zMax = 0.4;
-
-    // Defining the seed and the number of poses in the cloud
-    const int seed = 5784;
-    const int poseCount = 100;
+    PoseBox box;
+    box.yawMin = -M_PI;
+    box.yawMax = -box.yawMin;
+    box.pitchMin = -M_PI / 4.0;
+    box.pitchMax = -box.pitchMin;
+    box.rollMin = -M_PI / 4.0;
+    box.rollMax = -box.rollMin;
+    box.zMin = 0.5;
+    box.zMax = 0.1;
 
     // Generating the pose cloud
-    PoseCloud cloud(seed, poseCount, yawMin, yawMax, pitchMin, pitchMax, rollMin, rollMax, xMin, xMax, yMin, yMax, zMin, zMax);
-    cout << "Cloud: " << cloud << endl;
-    cout << "Generated poses: " << endl;
-    cloud.printPoses();
+    const int seed = 5784;
+    const int poseCount = 100;
+    PoseCloud cloud(seed, poseCount, box, camera);
+    cout << cloud << endl;
 
     // Writing the cloud in a YAML file
+    cout << "Writing cloud file..." << endl;
     cloud.write("data/aruco/cloud.yml");
+    cout << "Completed. " << endl;
+    
+    cout << "Drawing marker locations..." << endl;
+    Mat imageRGB(camera.imageHeight, camera.imageWidth, CV_8UC3);
+    cloud.draw(imageRGB, camera);
+    imshow("Location of markers", imageRGB);
+    waitKey(0);
 
     return 0;
 }
