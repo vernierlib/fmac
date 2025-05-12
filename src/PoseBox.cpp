@@ -54,18 +54,18 @@ void PoseBox::write(const std::string &filename) {
     if (!file.isOpened()) {
         throw std::runtime_error("Could not write the file: " + filename);
     }
-    file << "yawMin" << yawMin;
-    file << "yawMax" << yawMax;
-    file << "pitchMin" << pitchMin;
-    file << "pitchMax" << pitchMax;
-    file << "rollMin" << rollMin;
-    file << "rollMax" << rollMax;
-    file << "xMin" << xMin;
-    file << "xMax" << xMax;
-    file << "yMin" << yMin;
-    file << "yMax" << yMax;
-    file << "zMin" << zMin;
-    file << "zMax" << zMax;
+    file << "yaw_min" << yawMin;
+    file << "yaw_max" << yawMax;
+    file << "pitch_min" << pitchMin;
+    file << "pitch_max" << pitchMax;
+    file << "roll_min" << rollMin;
+    file << "roll_max" << rollMax;
+    file << "x_min" << xMin;
+    file << "x_max" << xMax;
+    file << "y_min" << yMin;
+    file << "y_max" << yMax;
+    file << "z_min" << zMin;
+    file << "z_max" << zMax;
     file.release();
 }
 
@@ -74,18 +74,18 @@ void PoseBox::read(const std::string &filename) {
     if (!file.isOpened()) {
         throw std::runtime_error("Could not find or read the file: " + filename);
     }
-    file["yawMin"] >> yawMin;
-    file["yawMax"] >> yawMax;
-    file["pitchMin"] >> pitchMin;
-    file["pitchMax"] >> pitchMax;
-    file["rollMin"] >> rollMin;
-    file["rollMax"] >> rollMax;
-    file["xMin"] >> xMin;
-    file["xMax"] >> xMax;
-    file["yMin"] >> yMin;
-    file["yMax"] >> yMax;
-    file["zMin"] >> zMin;
-    file["zMax"] >> zMax;
+    file["yaw_min"] >> yawMin;
+    file["yaw_max"] >> yawMax;
+    file["pitch_min"] >> pitchMin;
+    file["pitch_max"] >> pitchMax;
+    file["roll_min"] >> rollMin;
+    file["roll_mMax"] >> rollMax;
+    file["x_min"] >> xMin;
+    file["x_max"] >> xMax;
+    file["y_min"] >> yMin;
+    file["y_max"] >> yMax;
+    file["z_min"] >> zMin;
+    file["z_max"] >> zMax;
     file.release();
     checkParameters();
 }

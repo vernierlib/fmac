@@ -80,6 +80,12 @@ public:
 
     /// @brief Sets the rotation vector at a given index.
     void setRVec(int index, const cv::Mat & rvec);
+    
+    /// @brief Sets the vector of the four marker corners.
+    void setMarkerCorners(int index, const std::vector<cv::Point2d> & corners);
+
+    /// @brief Sets the vector of the four marker corners.
+    void setMarkerCorners(int index, const std::vector<cv::Point2f> & corners);
 
     /// @brief Draws all the poses of the cloud in an image using a given camera.    
     void draw(cv::Mat & image, const ThinLensCamera & camera);
@@ -88,6 +94,7 @@ private:
     cv::Mat rvec;
     cv::Mat tvec;
     cv::Mat rpy;
+    cv::Mat markerCorners;
 
     int seed;
     int poseCount;

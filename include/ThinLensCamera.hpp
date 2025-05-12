@@ -103,8 +103,11 @@ public:
     /** Returns the distance from sharp background */
     virtual double farDepthOfFieldLimit() const;
     
-    /** Return the focus distance that maximize the depth of field */
+    /** Returns the focus distance that maximize the depth of field */
     virtual double hyperfocalDistance() const;
+    
+    /** Returns the coordinates of the four marker corners in the image (pixels). */
+    std::vector<cv::Point2d> markerCorners(const cv::Vec3d &rvec, const cv::Vec3d &tvec) const;
 
     virtual std::string toString() const;
 

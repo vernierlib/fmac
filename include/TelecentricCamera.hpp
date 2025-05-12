@@ -21,6 +21,8 @@ public:
 //    inline double airyDiskRadiusInPixels() {
 //        return 1.22 * lightWaveLength * fNumber / pixelPitch;
 //    }
+    
+    std::vector<cv::Point2d> markerCorners(const cv::Vec3d &rvec, const cv::Vec3d &tvec) const;
 
 private:
     

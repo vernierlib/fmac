@@ -15,6 +15,7 @@ PoseCloud::PoseCloud(int seed, int poseCount, PoseBox box) {
     rvec = cv::Mat::zeros(poseCount, 3, CV_64F);
     tvec = cv::Mat::zeros(poseCount, 3, CV_64F);
     rpy = cv::Mat::zeros(poseCount, 3, CV_64F);
+    markerCorners = cv::Mat::zeros(poseCount, 8, CV_64F);
     checkParameters();
 
     // Initialize Halton sampler with seed
@@ -24,7 +25,7 @@ PoseCloud::PoseCloud(int seed, int poseCount, PoseBox box) {
 
     // Compute poses
     for (int k = 0; k < poseCount; k++) {
-        
+
         double yaw = scale(haltonSampler.sample(0, k), box.yawMin, box.yawMax);
         double pitch = scale(haltonSampler.sample(1, k), box.pitchMin, box.pitchMax);
         double roll = scale(haltonSampler.sample(2, k), box.rollMin, box.rollMax);
@@ -33,23 +34,7 @@ PoseCloud::PoseCloud(int seed, int poseCount, PoseBox box) {
         double y = scale(haltonSampler.sample(5, k), box.yMin, box.yMax);
 
         setTaitBryanAngles(k, roll, pitch, yaw);
-        //        rpy.at<double>(k, 0) = roll;
-        //        rpy.at<double>(k, 1) = pitch;
-        //        rpy.at<double>(k, 2) = yaw;
-        //
-        //        cv::Mat rmat;
-        //        taitBryanAnglesToRotationMatrix(roll, pitch, yaw, rmat);
-        //        cv::Mat rv;
-        //        Rodrigues(rmat, rv);
-        //
-        //        rvec.at<double>(k, 0) = rv.at<double>(0);
-        //        rvec.at<double>(k, 1) = rv.at<double>(1);
-        //        rvec.at<double>(k, 2) = rv.at<double>(2);
-
         setTVec(k, x, y, z);
-        //        tvec.at<double>(k, 0) = x;
-        //        tvec.at<double>(k, 1) = y;
-        //        tvec.at<double>(k, 2) = z;
     }
 }
 
@@ -58,10 +43,11 @@ PoseCloud::PoseCloud(int seed, int poseCount, PoseBox box, const ThinLensCamera 
     this->poseCount = poseCount;
     this->box = box;
 
-    // Initilize the matrices
+    // Initialize the matrices
     rvec = cv::Mat::zeros(poseCount, 3, CV_64F);
     tvec = cv::Mat::zeros(poseCount, 3, CV_64F);
     rpy = cv::Mat::zeros(poseCount, 3, CV_64F);
+    markerCorners = cv::Mat::zeros(poseCount, 8, CV_64F);
     checkParameters();
 
     // Initialize Halton sampler with seed
@@ -84,23 +70,8 @@ PoseCloud::PoseCloud(int seed, int poseCount, PoseBox box, const ThinLensCamera 
         double y = scale(haltonSampler.sample(5, k), box.yMin, box.yMax);
 
         setTaitBryanAngles(k, roll, pitch, yaw);
-//                rpy.at<double>(k, 0) = roll;
-//                rpy.at<double>(k, 1) = pitch;
-//                rpy.at<double>(k, 2) = yaw;
-//        
-//                cv::Mat rmat;
-//                taitBryanAnglesToRotationMatrix(roll, pitch, yaw, rmat);
-//                cv::Mat rv;
-//                cv::Rodrigues(rmat, rv);
-//        
-//                rvec.at<double>(k, 0) = rv.at<double>(0);
-//                rvec.at<double>(k, 1) = rv.at<double>(1);
-//                rvec.at<double>(k, 2) = rv.at<double>(2);
-
         setTVec(k, x, y, z);
-//                tvec.at<double>(k, 0) = x;
-//                tvec.at<double>(k, 1) = y;
-//                tvec.at<double>(k, 2) = z;
+        setMarkerCorners(k, camera.markerCorners(getRVec(k), getTVec(k)));
     }
 }
 
@@ -114,6 +85,7 @@ void PoseCloud::checkParameters() {
     assert(rvec.rows == poseCount && rvec.cols == 3);
     assert(tvec.rows == poseCount && tvec.cols == 3);
     assert(rpy.rows == poseCount && rpy.cols == 3);
+    assert(markerCorners.rows == poseCount && markerCorners.cols == 8);
 }
 
 void PoseCloud::write(const std::string &filename) {
@@ -122,10 +94,11 @@ void PoseCloud::write(const std::string &filename) {
         throw std::runtime_error("Could not write the file: " + filename);
     }
     file << "seed" << seed;
-    file << "poseCount" << poseCount;
+    file << "pose_count" << poseCount;
     file << "rvec" << rvec;
     file << "tvec" << tvec;
     file << "rpy" << rpy;
+    file << "marker_corners" << markerCorners;
     file.release();
 }
 
@@ -135,10 +108,11 @@ void PoseCloud::read(const std::string &filename) {
         throw std::runtime_error("Could not find or read the file: " + filename);
     }
     file["seed"] >> seed;
-    file["poseCount"] >> poseCount;
+    file["pose_count"] >> poseCount;
     file["rvec"] >> rvec;
     file["tvec"] >> tvec;
     file["rpy"] >> rpy;
+    file["marker_corners"] >> markerCorners;
     file.release();
     checkParameters();
 }
@@ -201,6 +175,31 @@ void PoseCloud::setRVec(int index, const cv::Mat & rvec) {
     rpy.at<double>(index, 2) = yaw;
 }
 
+void PoseCloud::setMarkerCorners(int index, const std::vector<cv::Point2d> & corners) {
+    assert(corners.size() == 4);
+    markerCorners.at<double>(index, 0) = corners[0].x;
+    markerCorners.at<double>(index, 1) = corners[0].y;
+    markerCorners.at<double>(index, 2) = corners[1].x;
+    markerCorners.at<double>(index, 3) = corners[1].y;
+    markerCorners.at<double>(index, 4) = corners[2].x;
+    markerCorners.at<double>(index, 5) = corners[2].y;
+    markerCorners.at<double>(index, 6) = corners[3].x;
+    markerCorners.at<double>(index, 7) = corners[3].y;
+}
+
+void PoseCloud::setMarkerCorners(int index, const std::vector<cv::Point2f> & corners) {
+    assert(corners.size() == 4);
+    markerCorners.at<double>(index, 0) = corners[0].x;
+    markerCorners.at<double>(index, 1) = corners[0].y;
+    markerCorners.at<double>(index, 2) = corners[1].x;
+    markerCorners.at<double>(index, 3) = corners[1].y;
+    markerCorners.at<double>(index, 4) = corners[2].x;
+    markerCorners.at<double>(index, 5) = corners[2].y;
+    markerCorners.at<double>(index, 6) = corners[3].x;
+    markerCorners.at<double>(index, 7) = corners[3].y;
+}
+
+
 void PoseCloud::draw(cv::Mat & image, const ThinLensCamera & camera) {
     for (int k = 0; k < getPoseCount(); k++) {
         cv::drawFrameAxes(image, camera.cameraMatrix, camera.distortionCoefficients, getRVec(k), getTVec(k), std::max(camera.markerWidth, camera.markerHeight), 1);
@@ -208,10 +207,12 @@ void PoseCloud::draw(cv::Mat & image, const ThinLensCamera & camera) {
 }
 
 std::ostream &operator<<(std::ostream &os, const PoseCloud &cloud) {
-//    for (int k = 0; k < cloud.rpy.rows; k++) {
-//        os << "[" << k << "] yaw: " << cloud.rpy.at<double>(k, 2) << ", pitch: " << cloud.rpy.at<double>(k, 1) << ", roll: " << cloud.rpy.at<double>(k, 0) << ", x: " << cloud.tvec.at<double>(k, 0) << ", y: " << cloud.tvec.at<double>(k, 1) << ", z: " << cloud.tvec.at<double>(k, 2) << std::endl;
-//    }
-    os << "Cloud of " << cloud.poseCount << " poses in the box: " << cloud.box; 
+    os << "Cloud of " << cloud.poseCount << " poses in the box: " << cloud.box << std::endl;
+    if (cloud.poseCount <= 100) {
+        for (int k = 0; k < cloud.rpy.rows; k++) {
+            os << "[" << k << "] yaw: " << cloud.rpy.at<double>(k, 2) << ", pitch: " << cloud.rpy.at<double>(k, 1) << ", roll: " << cloud.rpy.at<double>(k, 0) << ", x: " << cloud.tvec.at<double>(k, 0) << ", y: " << cloud.tvec.at<double>(k, 1) << ", z: " << cloud.tvec.at<double>(k, 2) << std::endl;
+        }
+    }
     return os;
 }
 

@@ -179,16 +179,31 @@ void ThinLensCamera::computeFrameTransforms(const cv::Vec3d &rvec, const cv::Vec
     inverseRectificationCoeff = focusDistance / (focusDistance - focalLength);
 }
 
-void ThinLensCamera::computeRegionOfInterest(const cv::Vec3d &rvec, const cv::Vec3d &tvec) {
-    std::vector<cv::Point3d> markerCorners(4);
-    markerCorners[0] = cv::Point3d(0.0 - markerOriginX, 0.0 - markerOriginY, 0.0);
-    markerCorners[1] = cv::Point3d(markerWidth - markerOriginX, 0.0 - markerOriginY, 0.0);
-    markerCorners[2] = cv::Point3d(markerWidth - markerOriginX, markerHeight - markerOriginY, 0.0);
-    markerCorners[3] = cv::Point3d(0.0 - markerOriginX, markerHeight - markerOriginY, 0.0);
+std::vector<cv::Point2d> ThinLensCamera::markerCorners(const cv::Vec3d &rvec, const cv::Vec3d &tvec) const {
+    std::vector<cv::Point3d> markerPoints(4);
+    markerPoints[0] = cv::Point3d(0.0 - markerOriginX, 0.0 - markerOriginY, 0.0);
+    markerPoints[1] = cv::Point3d(markerWidth - markerOriginX, 0.0 - markerOriginY, 0.0);
+    markerPoints[2] = cv::Point3d(markerWidth - markerOriginX, markerHeight - markerOriginY, 0.0);
+    markerPoints[3] = cv::Point3d(0.0 - markerOriginX, markerHeight - markerOriginY, 0.0);
 
     std::vector<cv::Point2d> imagePoints;
-    cv::projectPoints(markerCorners, rvec, tvec, cameraMatrix, distortionCoefficients, imagePoints);
+    cv::projectPoints(markerPoints, rvec, tvec, cameraMatrix, distortionCoefficients, imagePoints);
+    
+    return imagePoints;   
+}
 
+
+
+void ThinLensCamera::computeRegionOfInterest(const cv::Vec3d &rvec, const cv::Vec3d &tvec) {
+    std::vector<cv::Point3d> markerPoints(4);
+    markerPoints[0] = cv::Point3d(0.0 - markerOriginX, 0.0 - markerOriginY, 0.0);
+    markerPoints[1] = cv::Point3d(markerWidth - markerOriginX, 0.0 - markerOriginY, 0.0);
+    markerPoints[2] = cv::Point3d(markerWidth - markerOriginX, markerHeight - markerOriginY, 0.0);
+    markerPoints[3] = cv::Point3d(0.0 - markerOriginX, markerHeight - markerOriginY, 0.0);
+
+    std::vector<cv::Point2d> imagePoints;
+    cv::projectPoints(markerPoints, rvec, tvec, cameraMatrix, distortionCoefficients, imagePoints);
+    
     colMin = std::floor(std::min(std::min(imagePoints[0].x, imagePoints[1].x), std::min(imagePoints[2].x, imagePoints[3].x)));
     colMax = 1 + std::floor(std::max(std::max(imagePoints[0].x, imagePoints[1].x), std::max(imagePoints[2].x, imagePoints[3].x)));
     rowMin = std::floor(std::min(std::min(imagePoints[0].y, imagePoints[1].y), std::min(imagePoints[2].y, imagePoints[3].y)));
@@ -200,7 +215,7 @@ void ThinLensCamera::computeRegionOfInterest(const cv::Vec3d &rvec, const cv::Ve
 
     double maxConfusionRadius = 0.0;
     for (int i = 0; i < 4; i++) {
-        double distance = tvec(2) + rotationMatrix.at<double>(2, 0) * markerCorners[i].x + rotationMatrix.at<double>(2, 1) * markerCorners[i].y + rotationMatrix.at<double>(2, 2) * markerCorners[i].z;
+        double distance = tvec(2) + rotationMatrix.at<double>(2, 0) * markerPoints[i].x + rotationMatrix.at<double>(2, 1) * markerPoints[i].y + rotationMatrix.at<double>(2, 2) * markerPoints[i].z;
         double confusionRadius = circleOfConfusionRadiusInPixels(distance);
         maxConfusionRadius = std::max(confusionRadius, maxConfusionRadius);
     }

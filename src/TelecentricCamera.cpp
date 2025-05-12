@@ -10,27 +10,48 @@ TelecentricCamera::TelecentricCamera(const std::string &ymlFilename, const std::
 : ThinLensCamera(ymlFilename, bitmapFilename) {
 }
 
-void TelecentricCamera::computeRegionOfInterest(const cv::Vec3d &rvec, const cv::Vec3d &tvec) {
-    std::vector<cv::Point3d> markerCorners(4);
-    markerCorners[0] = cv::Point3d(0.0 - markerOriginX, 0.0 - markerOriginY, 0.0);
-    markerCorners[1] = cv::Point3d(markerWidth - markerOriginX, 0.0 - markerOriginY, 0.0);
-    markerCorners[2] = cv::Point3d(markerWidth - markerOriginX, markerHeight - markerOriginY, 0.0);
-    markerCorners[3] = cv::Point3d(0.0 - markerOriginX, markerHeight - markerOriginY, 0.0);
+std::vector<cv::Point2d> TelecentricCamera::markerCorners(const cv::Vec3d &rvec, const cv::Vec3d &tvec) const {
+    std::vector<cv::Point3d> markerPoints(4);
+    markerPoints[0] = cv::Point3d(0.0 - markerOriginX, 0.0 - markerOriginY, 0.0);
+    markerPoints[1] = cv::Point3d(markerWidth - markerOriginX, 0.0 - markerOriginY, 0.0);
+    markerPoints[2] = cv::Point3d(markerWidth - markerOriginX, markerHeight - markerOriginY, 0.0);
+    markerPoints[3] = cv::Point3d(0.0 - markerOriginX, markerHeight - markerOriginY, 0.0);
 
     std::vector<cv::Point2d> imagePoints;
-    imagePoints.resize(markerCorners.size());
-    for (int k = 0; k < markerCorners.size(); k++) { // project corners
+    imagePoints.resize(markerPoints.size());
+    for (int k = 0; k < markerPoints.size(); k++) { // project corners
         Eigen::Vector4d corner, point;
-        corner(0) = markerCorners[k].x;
-        corner(1) = markerCorners[k].y;
-        corner(2) = markerCorners[k].z;
+        corner(0) = markerPoints[k].x;
+        corner(1) = markerPoints[k].y;
+        corner(2) = markerPoints[k].z;
         corner(3) = 1.0;
         point = cTm * corner;
         imagePoints[k].x = point(0) * focalLength / focusDistance / pixelPitch + principalPointX;
         imagePoints[k].y = point(1) * focalLength / focusDistance / pixelPitch + principalPointY;
     }
-    // std::vector<cv::Point2d> imagePoints;
-    // cv::projectPoints(markerCorners, rvec, tvec, cameraMatrix, distortionCoefficients, imagePoints);
+    
+    return imagePoints;   
+}
+
+void TelecentricCamera::computeRegionOfInterest(const cv::Vec3d &rvec, const cv::Vec3d &tvec) {
+    std::vector<cv::Point3d> markerPoints(4);
+    markerPoints[0] = cv::Point3d(0.0 - markerOriginX, 0.0 - markerOriginY, 0.0);
+    markerPoints[1] = cv::Point3d(markerWidth - markerOriginX, 0.0 - markerOriginY, 0.0);
+    markerPoints[2] = cv::Point3d(markerWidth - markerOriginX, markerHeight - markerOriginY, 0.0);
+    markerPoints[3] = cv::Point3d(0.0 - markerOriginX, markerHeight - markerOriginY, 0.0);
+
+    std::vector<cv::Point2d> imagePoints;
+    imagePoints.resize(markerPoints.size());
+    for (int k = 0; k < markerPoints.size(); k++) { // project corners
+        Eigen::Vector4d corner, point;
+        corner(0) = markerPoints[k].x;
+        corner(1) = markerPoints[k].y;
+        corner(2) = markerPoints[k].z;
+        corner(3) = 1.0;
+        point = cTm * corner;
+        imagePoints[k].x = point(0) * focalLength / focusDistance / pixelPitch + principalPointX;
+        imagePoints[k].y = point(1) * focalLength / focusDistance / pixelPitch + principalPointY;
+    }
 
     colMin = std::floor(std::min(std::min(imagePoints[0].x, imagePoints[1].x), std::min(imagePoints[2].x, imagePoints[3].x)));
     colMax = 1 + std::floor(std::max(std::max(imagePoints[0].x, imagePoints[1].x), std::max(imagePoints[2].x, imagePoints[3].x)));
@@ -43,7 +64,7 @@ void TelecentricCamera::computeRegionOfInterest(const cv::Vec3d &rvec, const cv:
 
     double maxConfusionRadius = 0.0;
     for (int i = 0; i < 4; i++) {
-        double distance = tvec(2) + rotationMatrix.at<double>(2, 0) * markerCorners[i].x + rotationMatrix.at<double>(2, 1) * markerCorners[i].y + rotationMatrix.at<double>(2, 2) * markerCorners[i].z;
+        double distance = tvec(2) + rotationMatrix.at<double>(2, 0) * markerPoints[i].x + rotationMatrix.at<double>(2, 1) * markerPoints[i].y + rotationMatrix.at<double>(2, 2) * markerPoints[i].z;
         double confusionRadius = circleOfConfusionRadiusInPixels(distance);
         maxConfusionRadius = std::max(confusionRadius, maxConfusionRadius);
     }
