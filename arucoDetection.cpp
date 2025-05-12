@@ -22,10 +22,8 @@ int main() {
     std::vector<int> markerIds;
     std::vector<std::vector<cv::Point2f>> markerCorners, rejectedCandidates;
     cv::aruco::DetectorParameters detectorParams = cv::aruco::DetectorParameters();
-    // detectorParams.cornerRefinementMethod = cv::aruco::CORNER_REFINE_SUBPIX;
-    // detectorParams.cornerRefinementMethod = cv::aruco::CORNER_REFINE_CONTOUR;
-    // detectorParams.cornerRefinementMethod = cv::aruco::CORNER_REFINE_APRILTAG;
-
+    detectorParams.cornerRefinementMethod = cv::aruco::CORNER_REFINE_SUBPIX;
+    
     cv::aruco::Dictionary dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_6X6_250);
     cv::aruco::ArucoDetector detector(dictionary, detectorParams);
     detector.detectMarkers(image, markerCorners, markerIds, rejectedCandidates);

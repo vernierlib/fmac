@@ -27,8 +27,8 @@ int main() {
         cout << "Rendering..." << endl;
         camera.render(rvec, tvec, image);
 
-        imwrite("data/opencv/outputImage" + to_string(frame + 1) + ".jpg", image);
-        image.convertTo(image, CV_64F);
+        imwrite("data/opencv/render" + to_string(frame + 1) + ".jpg", image);
+        image.convertTo(image, CV_32F);
         normalize(image, image, 1.0, 0, cv::NORM_MINMAX);
         imshow("Rendered image", image);
         moveWindow("Rendered image", image.cols, 0);
@@ -39,7 +39,7 @@ int main() {
             std::cout << "Could not find or read the image: " << filename << std::endl;
             return 1;
         }
-        originalImage.convertTo(originalImage, CV_64F);
+        originalImage.convertTo(originalImage, CV_32F);
         normalize(originalImage, originalImage, 1.0, 0, cv::NORM_MINMAX);
         Mat originalImageRGB;
         merge(std::vector<Mat>({originalImage, originalImage, originalImage}), originalImageRGB);
@@ -50,6 +50,7 @@ int main() {
 
         Mat colorImage;
         merge(std::vector<Mat>({image, image, originalImage}), colorImage);
+        imwrite("data/opencv/superposition" + to_string(frame + 1) + ".tiff", colorImage);
         imshow("Image comparison", colorImage);
         moveWindow("Image comparison", 0, image.rows);
 

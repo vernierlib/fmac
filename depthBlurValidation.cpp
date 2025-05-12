@@ -34,10 +34,10 @@ int main() {
     
     camera.showMaps();
 
-    image.convertTo(image, CV_64F);
+    image.convertTo(image, CV_32F);
     cv::normalize(image, image, 1.0, 0, cv::NORM_MINMAX);
     imshow("Rendered image", image);
-    imwrite("data/matlab/outputImage.tiff", image);
+    imwrite("data/matlab/render" + to_string(frame + 1) + ".tiff", image);
    
     string filename = "data/matlab/image" + to_string(frame + 1) + ".jpg";
     Mat originalImage = imread(filename, IMREAD_GRAYSCALE);
@@ -45,12 +45,13 @@ int main() {
         std::cout << "Could not find or read the image: " << filename << std::endl;
         return 1;
     }
-    originalImage.convertTo(originalImage, CV_64F);
+    originalImage.convertTo(originalImage, CV_32F);
     cv::normalize(originalImage, originalImage, 1.0, 0, cv::NORM_MINMAX);
     imshow("Original image", originalImage);
 
     Mat colorImage;
     merge(std::vector<Mat>({image, image, originalImage}), colorImage);
+    imwrite("data/matlab/superposition" + to_string(frame + 1) + ".tiff", colorImage);
     imshow("Image comparison", colorImage);
 
     waitKey(0);
