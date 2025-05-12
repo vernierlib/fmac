@@ -141,6 +141,8 @@ protected:
     virtual void refineImageWithAdaptiveSampling();
 
     virtual void addDiffractionBlur();
+    
+    virtual void applyGammaCorrection();
 
     virtual void quantifyOutputImage(cv::Mat &outputImage);
 

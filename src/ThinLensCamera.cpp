@@ -22,6 +22,7 @@ void ThinLensCamera::render(const cv::Vec3d &rvec, const cv::Vec3d &tvec, cv::Ma
     computeEdgeMaps();
     refineImageWithAdaptiveSampling();
     addDiffractionBlur();
+    applyGammaCorrection();
     quantifyOutputImage(outputImage);
 }
 
@@ -76,7 +77,12 @@ void ThinLensCamera::readCameraParameters(const std::string &filename) {
     file["light_wavelength"] >> lightWaveLength;
     file["background_intensity"] >> backgroundIntensity;
     file["unit"] >> unit;
-    file["brand"] >> brand;
+    cv::FileNode cameraBrandNode = file["brand"];
+    if (cameraBrandNode.empty()) {
+        brand = "Unknown camera";
+    } else {
+        file["brand"] >> brand;
+    }
     file.release();
 }
 
@@ -188,11 +194,9 @@ std::vector<cv::Point2d> ThinLensCamera::markerCorners(const cv::Vec3d &rvec, co
 
     std::vector<cv::Point2d> imagePoints;
     cv::projectPoints(markerPoints, rvec, tvec, cameraMatrix, distortionCoefficients, imagePoints);
-    
-    return imagePoints;   
+
+    return imagePoints;
 }
-
-
 
 void ThinLensCamera::computeRegionOfInterest(const cv::Vec3d &rvec, const cv::Vec3d &tvec) {
     std::vector<cv::Point3d> markerPoints(4);
@@ -203,7 +207,7 @@ void ThinLensCamera::computeRegionOfInterest(const cv::Vec3d &rvec, const cv::Ve
 
     std::vector<cv::Point2d> imagePoints;
     cv::projectPoints(markerPoints, rvec, tvec, cameraMatrix, distortionCoefficients, imagePoints);
-    
+
     colMin = std::floor(std::min(std::min(imagePoints[0].x, imagePoints[1].x), std::min(imagePoints[2].x, imagePoints[3].x)));
     colMax = 1 + std::floor(std::max(std::max(imagePoints[0].x, imagePoints[1].x), std::max(imagePoints[2].x, imagePoints[3].x)));
     rowMin = std::floor(std::min(std::min(imagePoints[0].y, imagePoints[1].y), std::min(imagePoints[2].y, imagePoints[3].y)));
@@ -347,15 +351,30 @@ void ThinLensCamera::refineImageWithAdaptiveSampling() {
 }
 
 void ThinLensCamera::addDiffractionBlur() {
-    double sigma = airyDiskRadiusInPixels() / 3.0;
-    int kernelSize = (int) (6*sigma);
-    if (kernelSize%2==0) {
+    double sigma = airyDiskRadiusInPixels();
+    int kernelSize = (int) (6 * sigma);
+    if (kernelSize % 2 == 0) {
         kernelSize++;
     }
     cv::GaussianBlur(intensityMap, intensityMap, cv::Size(kernelSize, kernelSize), sigma);
 }
 
-void ThinLensCamera::quantifyOutputImage(cv::Mat &outputImage) {
+void ThinLensCamera::applyGammaCorrection() {
+    for (int row = rowMin; row < rowMax; row++) {
+        for (int col = colMin; col < colMax; col++) {
+            double lightIntensity = intensityMap.at<double>(row, col);
+            double videoSignal;
+            if (lightIntensity <= 0.018) {
+                videoSignal = 4.5 * lightIntensity;
+            } else {
+                videoSignal = 1.099 * std::pow(lightIntensity, 0.45) - 0.099;
+            }
+            intensityMap.at<double>(row, col) = videoSignal;
+        }
+    }
+}
+
+void ThinLensCamera::quantifyOutputImage(cv::Mat & outputImage) {
     if (bitDepth <= 8) {
         intensityMap.convertTo(outputImage, CV_8U, maxIntensityValue);
     } else {
@@ -417,7 +436,7 @@ std::string ThinLensCamera::toString() const {
     return os.str();
 }
 
-std::ostream &operator<<(std::ostream &os, const ThinLensCamera &camera) {
+std::ostream &operator<<(std::ostream &os, const ThinLensCamera & camera) {
     os << "Thin-lens camera model based on " << camera.toString();
     return os;
 }
