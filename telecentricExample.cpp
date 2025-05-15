@@ -1,5 +1,4 @@
 #include "TelecentricCamera.hpp"
-#include <opencv2/objdetect/aruco_detector.hpp>
 
 using namespace cv;
 using namespace std;

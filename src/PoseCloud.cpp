@@ -19,9 +19,9 @@ PoseCloud::PoseCloud(int seed, int poseCount, PoseBox box) {
     checkParameters();
 
     // Initialize Halton sampler with seed
-    srand48(seed);
     Halton_sampler haltonSampler;
-    haltonSampler.init_faure();
+    std::mt19937 rng(seed);
+    haltonSampler.init_random(rng);
 
     // Compute poses
     for (int k = 0; k < poseCount; k++) {
@@ -51,9 +51,9 @@ PoseCloud::PoseCloud(int seed, int poseCount, PoseBox box, const ThinLensCamera 
     checkParameters();
 
     // Initialize Halton sampler with seed
-    srand48(seed);
     Halton_sampler haltonSampler;
-    haltonSampler.init_faure();
+    std::mt19937 rng(seed);
+    haltonSampler.init_random(rng);
 
     // Compute poses
     for (int k = 0; k < poseCount; k++) {

@@ -1,5 +1,4 @@
 #include "ThinLensCamera.hpp"
-#include <opencv2/objdetect/aruco_detector.hpp>
 
 using namespace cv;
 using namespace std;
@@ -7,13 +6,13 @@ using namespace std;
 int main() {
 
     cout << "Loading configuration files..." << endl;
-    ThinLensCamera camera("data/aruco/left_camera.yml", "data/aruco/aruco.png");
+    ThinLensCamera camera("data/aruco/camera.json", "data/aruco/aruco.png");
     cout << camera;
-    
+
     cout << "Rendering..." << endl;
-    cv::Mat rvec = (Mat_<double>(1, 3) << 0.54395, -0.0622605, -0.137385);
-    cv::Mat tvec = (Mat_<double>(1, 3) << 0.01, 0.02, 0.1);
-    
+    cv::Mat rvec = (Mat_<double>(1, 3) << 1.0177665535647002, -1.0177665535647002, 2.4571058169456226);
+    cv::Mat tvec = (Mat_<double>(1, 3) << -123.86148808975392, -75.218446537651744, 500.0);
+
     Mat image;
     camera.render(rvec, tvec, image);
 

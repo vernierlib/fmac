@@ -49,7 +49,7 @@ int main() {
         moveWindow("Original image", 0, 0);
 
         Mat colorImage;
-        merge(std::vector<Mat>({image, image, originalImage}), colorImage);
+        merge(std::vector<Mat>({originalImage, originalImage, originalImage+(originalImage-image)}), colorImage);
         imwrite("data/opencv/superposition" + to_string(frame + 1) + ".tiff", colorImage);
         imshow("Image comparison", colorImage);
         moveWindow("Image comparison", 0, image.rows);
