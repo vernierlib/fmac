@@ -9,7 +9,7 @@ marker_width: 290.
 marker_height: 203.
 marker_origin_x: 29.
 marker_origin_y: 29.
-light_wavelength: 0.0006
+light_wavelength: 0.00065
 background_intensity: 1.0
 unit: mm
 brand: Canon EOS DIGITAL REBEL XS

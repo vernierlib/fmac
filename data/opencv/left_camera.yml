@@ -69,7 +69,7 @@ marker_width: 0.25
 marker_height: 0.175
 marker_origin_x: 0.025
 marker_origin_y: 0.025
-light_wavelength: 0.0000006
+light_wavelength: 0.00000065
 background_intensity: 0.0
 brand: webcam
 unit: m
