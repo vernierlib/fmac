@@ -62,7 +62,7 @@ extrinsic_parameters: !!opencv-matrix
        -0.093772966066062974, 0.29083048388771565 ]
 
 bit_depth: 8
-pixel_pitch: 0.0000028
+pixel_pitch: 0.0000083
 f_number: 2.8
 focus_distance: 0.15
 marker_width: 0.25
@@ -70,6 +70,6 @@ marker_height: 0.175
 marker_origin_x: 0.025
 marker_origin_y: 0.025
 light_wavelength: 0.0000007
-background_intensity: 1.0
+background_intensity: 0.0
 brand: webcam
 unit: m
