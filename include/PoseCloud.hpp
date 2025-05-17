@@ -44,6 +44,7 @@ public:
     void read(const std::string & filename);
 
     /// Returns the number of poses of the cloud.
+
     double getPoseCount() {
         return poseCount;
     }
@@ -55,16 +56,19 @@ public:
     cv::Vec3d getRVec(int index);
 
     /// @brief Returns the yaw angle Rz at a given index.
+
     double getYaw(int index) {
         return rpy.at<double>(index, 2);
     }
 
     /// @brief Returns the pitch angle Ry at a given index.
+
     double getPitch(int index) {
         return rpy.at<double>(index, 1);
     }
-    
+
     /// @brief Returns the roll angle Rx at a given index.
+
     double getRoll(int index) {
         return rpy.at<double>(index, 0);
     }
@@ -80,7 +84,7 @@ public:
 
     /// @brief Sets the rotation vector at a given index.
     void setRVec(int index, const cv::Mat & rvec);
-    
+
     /// @brief Sets the vector of the four marker corners.
     void setMarkerCorners(int index, const std::vector<cv::Point2d> & corners);
 
@@ -95,26 +99,28 @@ private:
     cv::Mat tvec;
     cv::Mat rpy;
     cv::Mat markerCorners;
-
     int seed;
     int poseCount;
     PoseBox box;
 
     void checkParameters();
 
-    // Calculates rotation matrix given Tait-Bryan angles.
-    void taitBryanAnglesToRotationMatrix(double roll, double pitch, double yaw, cv::Mat & result);
-    
-    // Calculates Tait-Bryan angle given a rotation matrix.
-    void rotationMatrixToTaitBryanAngles(const cv::Mat & rmat, double & roll, double & pitch, double & yaw);
-
-    // Scales a value from [0;1[ to [min;max[
-    double scale(double value, double min, double max);
-
     friend std::ostream &operator<<(std::ostream &os, const PoseCloud &cloud);
 };
 
 /// @brief Prints all the poses of the cloud in the output stream.
 std::ostream &operator<<(std::ostream &os, const PoseCloud &cloud);
+
+/// Calculates rotation matrix given Tait-Bryan angles.
+void taitBryanAnglesToRotationMatrix(double roll, double pitch, double yaw, cv::Mat & result);
+
+/// Calculates Tait-Bryan angle given a rotation matrix.
+void rotationMatrixToTaitBryanAngles(const cv::Mat & rmat, double & roll, double & pitch, double & yaw);
+
+/// Scales a value from [0;1[ to [min;max[
+double scale(double value, double min, double max);
+
+/// Returns true if mat is a rotation matrix 
+bool isRotationMatrix(const cv::Mat &mat);
 
 #endif

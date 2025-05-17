@@ -39,7 +39,7 @@ int main() {
     imshow("Rendered image", image);
     imwrite("data/matlab/render" + to_string(frame + 1) + ".tiff", image);
    
-    string filename = "data/matlab/image" + to_string(frame + 1) + "b.jpg";
+    string filename = "data/matlab/image" + to_string(frame + 1) + ".jpg";
     Mat originalImage = imread(filename, IMREAD_GRAYSCALE);
     if (originalImage.empty()) {
         std::cout << "Could not find or read the image: " << filename << std::endl;
@@ -49,11 +49,6 @@ int main() {
     cv::normalize(originalImage, originalImage, 1.0, 0, cv::NORM_MINMAX);
     imshow("Original image", originalImage);
 
-    Mat colorImage;
-    merge(std::vector<Mat>({image, image, originalImage}), colorImage);
-    imwrite("data/matlab/superposition" + to_string(frame + 1) + ".tiff", colorImage);
-    imshow("Image comparison", colorImage);
-    
     Mat originalZoom1 = originalImage(Rect(1438, 1338, 31, 31));
     resize(originalZoom1, originalZoom1, Size(310, 310),0,0,INTER_NEAREST);
     imwrite("data/matlab/originalZoom1.tiff", originalZoom1);

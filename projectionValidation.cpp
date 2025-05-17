@@ -50,7 +50,8 @@ int main() {
 
         Mat colorImage;
         merge(std::vector<Mat>({originalImage, originalImage, originalImage+(originalImage-image)}), colorImage);
-        imwrite("data/opencv/superposition" + to_string(frame + 1) + ".tiff", colorImage);
+        normalize(colorImage, colorImage, 255, 0, cv::NORM_MINMAX, CV_8UC3);
+        imwrite("data/opencv/superposition" + to_string(frame + 1) + ".jpg", colorImage);
         imshow("Image comparison", colorImage);
         moveWindow("Image comparison", 0, image.rows);
 

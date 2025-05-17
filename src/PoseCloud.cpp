@@ -199,7 +199,6 @@ void PoseCloud::setMarkerCorners(int index, const std::vector<cv::Point2f> & cor
     markerCorners.at<double>(index, 7) = corners[3].y;
 }
 
-
 void PoseCloud::draw(cv::Mat & image, const ThinLensCamera & camera) {
     for (int k = 0; k < getPoseCount(); k++) {
         cv::drawFrameAxes(image, camera.cameraMatrix, camera.distortionCoefficients, getRVec(k), getTVec(k), std::max(camera.markerWidth, camera.markerHeight), 1);
@@ -216,7 +215,7 @@ std::ostream &operator<<(std::ostream &os, const PoseCloud &cloud) {
     return os;
 }
 
-void PoseCloud::taitBryanAnglesToRotationMatrix(double roll, double pitch, double yaw, cv::Mat &result) {
+void taitBryanAnglesToRotationMatrix(double roll, double pitch, double yaw, cv::Mat &result) {
     // Rotation matrix about x axis
     cv::Mat R_x = (cv::Mat_<double>(3, 3) << 1, 0, 0,
             0, cos(roll), -sin(roll),
@@ -236,7 +235,7 @@ void PoseCloud::taitBryanAnglesToRotationMatrix(double roll, double pitch, doubl
     result = R_z * R_y * R_x;
 }
 
-void PoseCloud::rotationMatrixToTaitBryanAngles(const cv::Mat & rmat, double & roll, double & pitch, double & yaw) {
+void rotationMatrixToTaitBryanAngles(const cv::Mat & rmat, double & roll, double & pitch, double & yaw) {
 
     double sy = sqrt(rmat.at<double>(0, 0) * rmat.at<double>(0, 0) + rmat.at<double>(1, 0) * rmat.at<double>(1, 0));
 
@@ -253,19 +252,17 @@ void PoseCloud::rotationMatrixToTaitBryanAngles(const cv::Mat & rmat, double & r
     }
 }
 
-double PoseCloud::scale(double value, double min, double max) {
+double scale(double value, double min, double max) {
     return min + (max - min) * value;
 }
 
-// // Checks if a matrix is a valid rotation matrix.
-// // https://learnopencv.com/rotation-matrix-to-euler-angles/
-// bool isRotationMatrix(Mat &R)
-// {
-//     Mat Rt;
-//     transpose(R, Rt);
-//     Mat shouldBeIdentity = Rt * R;
-//     Mat I = Mat::eye(3,3, shouldBeIdentity.type());
-//
-//     return  norm(I, shouldBeIdentity) < 1e-6;
-//
-// }
+bool isRotationMatrix(const cv::Mat &mat) {
+    if (mat.cols!=3 || mat.rows!=3) {
+        return false;
+    }
+    cv::Mat matT;
+    transpose(mat, matT);
+    cv::Mat shouldBeIdentity = matT * mat;
+    cv::Mat I = cv::Mat::eye(3, 3, shouldBeIdentity.type());
+    return cv::norm(I, shouldBeIdentity) < 1e-6;
+}

@@ -4,7 +4,12 @@
  * Copyright (c) 2025 CNRS, ENSMM, UMLP.
  */
 
+#include <math.h>
+
 #include "ThinLensCamera.hpp"
+#include "j1.h"
+
+#define FIRST_ZERO_RADIUS 1.2196698912665045
 
 ThinLensCamera::ThinLensCamera(const std::string &ymlFilename, const std::string &bitmapFilename) {
     readCameraParameters(ymlFilename);
@@ -54,14 +59,6 @@ void ThinLensCamera::readCameraParameters(const std::string &filename) {
     if (!file.isOpened()) {
         throw std::runtime_error("Could not find or read the camera parameter file: " + filename);
     }
-    // cv::FileNode cameraBrandNode = file["camera_brand"];
-    // if (cameraBrandNode.empty()) {
-    //     std::cout << "'camera_brand' n'est pas présent dans le fichier YAML." << std::endl;
-    // } else {
-    //     // Récupérer la valeur en tant que double
-    //     double focalLength = (double)focalLengthNode;
-    //     std::cout << "Longueur focale : " << focalLength << std::endl;
-    // }
     file["image_width"] >> imageWidth;
     file["image_height"] >> imageHeight;
     file["camera_matrix"] >> cameraMatrix;
@@ -169,7 +166,6 @@ void ThinLensCamera::computeFrameTransforms(const cv::Vec3d &rvec, const cv::Vec
     cTm(0, 2) = rotationMatrix.at<double>(0, 2);
     cTm(1, 2) = rotationMatrix.at<double>(1, 2);
     cTm(2, 2) = rotationMatrix.at<double>(2, 2);
-    // cTm.block<3,3>(0,0)=cTm.block<3,3>(0,0) * Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitX());
     mTc = cTm.inverse();
 
     markerNormal = Eigen::Vector3d(mTc(2, 0), mTc(2, 1), mTc(2, 2));
@@ -350,13 +346,44 @@ void ThinLensCamera::refineImageWithAdaptiveSampling() {
     }
 }
 
+//void ThinLensCamera::addDiffractionBlur() {
+//    double sigma = airyDiskRadiusInPixels();
+//    int kernelSize = (int) (6 * sigma);
+//    if (kernelSize % 2 == 0) {
+//        kernelSize++;
+//    }
+//    cv::GaussianBlur(intensityMap, intensityMap, cv::Size(kernelSize, kernelSize), sigma);
+//}
+
 void ThinLensCamera::addDiffractionBlur() {
-    double sigma = airyDiskRadiusInPixels();
-    int kernelSize = (int) (6 * sigma);
+
+    double radius = airyDiskRadiusInPixels();
+    int kernelSize = (int) (8 * radius);
     if (kernelSize % 2 == 0) {
         kernelSize++;
     }
-    cv::GaussianBlur(intensityMap, intensityMap, cv::Size(kernelSize, kernelSize), sigma);
+    int center = (kernelSize - 1) / 2;
+    cv::Mat kernel = cv::Mat::zeros(cv::Size(kernelSize, kernelSize), CV_64F);
+    double coefficientSum = 0.0;
+    for (int row = 0; row < kernel.rows; row++) {
+        for (int col = 0; col < kernel.cols; col++) {
+            if (col == center && row == center) {
+                kernel.at<double>(row, col) = 1.0;
+            } else {
+                double distance = std::hypot(col - center, row - center);
+                double x = FIRST_ZERO_RADIUS * M_PI * distance / radius;
+                kernel.at<double>(row, col) = 2 * j1(x) / x;
+                kernel.at<double>(row, col) *= kernel.at<double>(row, col);
+            }
+            coefficientSum += kernel.at<double>(row, col);
+        }
+    }
+    kernel = kernel / coefficientSum;
+    cv::filter2D(intensityMap, intensityMap, CV_64F, kernel);
+}
+
+double ThinLensCamera::airyDiskRadiusInPixels() const {
+    return FIRST_ZERO_RADIUS * lightWaveLength * lensToSensorDistance / lensRadius / pixelPitch;
 }
 
 void ThinLensCamera::applyGammaCorrection() {
@@ -380,10 +407,6 @@ void ThinLensCamera::quantifyOutputImage(cv::Mat & outputImage) {
     } else {
         intensityMap.convertTo(outputImage, CV_16U, maxIntensityValue);
     }
-}
-
-double ThinLensCamera::airyDiskRadiusInPixels() const {
-    return 1.22 * lightWaveLength * fNumber / pixelPitch;
 }
 
 double ThinLensCamera::angleOfViewInDeg() const {
@@ -415,10 +438,6 @@ double ThinLensCamera::farDepthOfFieldLimit() const {
 
 std::string ThinLensCamera::toString() const {
     std::ostringstream os;
-    //    os << brand << " " << imageWidth << "x" << imageHeight << " " << bitDepth << "-bits"
-    //            << " with focal length of " << focalLength << unit
-    //            << ", aperture of f/" << fNumber
-    //            << ", and focus distance at " << focusDistance << unit;
     os << brand << std::endl;
     os << "  | resolution: " << imageWidth << "x" << imageHeight << " px" << std::endl;
     os << "  | pixel pitch: " << pixelPitch << " " << unit << std::endl;
@@ -431,7 +450,7 @@ std::string ThinLensCamera::toString() const {
     os << "  | hyperfocal distance: " << hyperfocalDistance() << " " << unit << std::endl;
     os << "  | near depth of field limit: " << nearDepthOfFieldLimit() << " " << unit << std::endl;
     os << "  | far depth of field limit: " << farDepthOfFieldLimit() << " " << unit << std::endl;
-    os << "  | airy disk radius: " << airyDiskRadiusInPixels() << " px" << std::endl;
+    os << "  | airy disk: " << airyDiskRadiusInPixels() << " px" << std::endl;
 
     return os.str();
 }
