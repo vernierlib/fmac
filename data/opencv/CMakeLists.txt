@@ -1,4 +1,4 @@
-file(GLOB FILES *.jpg *.png *.yml)
+file(GLOB FILES *.jpg *.png *.yml *.json)
 
 foreach(file ${FILES})
   get_filename_component(filename ${file} NAME) 

@@ -27,7 +27,7 @@
     "marker_height": 50.0,
     "marker_origin_x": 25.0,
     "marker_origin_y": 25.0,
-    "light_wavelength": 0.0007,
+    "light_wavelength": 0.0006,
     "background_intensity": 1.0,
     "unit": "mm",
     "brand": "Logitech HD Webcam C270",

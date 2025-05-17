@@ -2,7 +2,10 @@
 cmake_minimum_required(VERSION 3.10)
 
 # Project name
-project(fmac)
+project(fmac VERSION 1.0 LANGUAGES CXX)
+
+# Set build mode type
+set(CMAKE_BUILD_TYPE Release)
 
 # Find Eigen
 find_package(Eigen3 REQUIRED)
@@ -37,10 +40,11 @@ file(GLOB FILES *.cpp)
 foreach(file ${FILES})
   get_filename_component(filename ${file} NAME) 
   get_filename_component(targetname ${file} NAME_WLE) 
-  add_executable(${targetname} ${filename} src/ThinLensCamera.cpp src/TelecentricCamera.cpp src/PoseBox.cpp src/PoseCloud.cpp 3rdparty/gruenschloss/kuo-2d-proj/sobol.cpp)
+  add_executable(${targetname} ${filename} src/ThinLensCamera.cpp src/TelecentricCamera.cpp src/PoseBox.cpp src/PoseCloud.cpp 3rdparty/gruenschloss/kuo-2d-proj/sobol.cpp 3rdparty/bessel/j1.c)
   target_include_directories(${targetname} PUBLIC "${CMAKE_SOURCE_DIR}/include")
   target_include_directories(${targetname} PUBLIC "${CMAKE_SOURCE_DIR}/3rdparty/gruenschloss/kuo-2d-proj")
   target_include_directories(${targetname} PUBLIC "${CMAKE_SOURCE_DIR}/3rdparty/gruenschloss/halton")
+  target_include_directories(${targetname} PUBLIC "${CMAKE_SOURCE_DIR}/3rdparty/bessel")
   target_link_libraries(${targetname} PUBLIC ${OpenCV_LIBS})
   if(OpenMP_CXX_FOUND)
     target_link_libraries(${targetname} PUBLIC OpenMP::OpenMP_CXX)
