@@ -357,7 +357,7 @@ void ThinLensCamera::refineImageWithAdaptiveSampling() {
 
 void ThinLensCamera::addDiffractionBlur() {
 
-    double radius = airyDiskRadiusInPixels();
+    double radius = 2 * airyDiskRadiusInPixels();
     int kernelSize = (int) (8 * radius);
     if (kernelSize % 2 == 0) {
         kernelSize++;
@@ -383,7 +383,7 @@ void ThinLensCamera::addDiffractionBlur() {
 }
 
 double ThinLensCamera::airyDiskRadiusInPixels() const {
-    return FIRST_ZERO_RADIUS * lightWaveLength * lensToSensorDistance / lensRadius / pixelPitch;
+    return FIRST_ZERO_RADIUS * lightWaveLength * lensToSensorDistance / lensRadius / 2 / pixelPitch;
 }
 
 void ThinLensCamera::applyGammaCorrection() {
@@ -450,7 +450,7 @@ std::string ThinLensCamera::toString() const {
     os << "  | hyperfocal distance: " << hyperfocalDistance() << " " << unit << std::endl;
     os << "  | near depth of field limit: " << nearDepthOfFieldLimit() << " " << unit << std::endl;
     os << "  | far depth of field limit: " << farDepthOfFieldLimit() << " " << unit << std::endl;
-    os << "  | airy disk: " << airyDiskRadiusInPixels() << " px" << std::endl;
+    os << "  | airy disk radius: " << airyDiskRadiusInPixels() << " px" << std::endl;
 
     return os.str();
 }
