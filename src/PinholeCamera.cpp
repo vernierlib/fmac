@@ -17,7 +17,6 @@ void PinholeCamera::render(const cv::Vec3d &rvec, const cv::Vec3d &tvec, cv::Mat
     computeRegionOfInterest(rvec, tvec);
     computeSharpImageAndDepthMap();
     computeEdgeMaps();
-    addDiffractionBlur();
     applyGammaCorrection();
     quantifyOutputImage(outputImage);
 }

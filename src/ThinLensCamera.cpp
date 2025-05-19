@@ -7,7 +7,13 @@
 #include <math.h>
 
 #include "ThinLensCamera.hpp"
-#include "j1.h"
+
+#ifndef M_PI
+#define M_PI        3.14159265358979323846264338327950288   /* pi             */
+#define M_PI_2      1.57079632679489661923132169163975144   /* pi/2           */
+#define M_PI_4      0.785398163397448309615660845819875721  /* pi/4           */
+#include "j1.h" /* first order Bessel function */
+#endif
 
 #define FIRST_ZERO_RADIUS 1.2196698912665045
 
