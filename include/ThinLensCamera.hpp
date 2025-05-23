@@ -7,13 +7,12 @@
 #ifndef THIN_LENS_CAMERA_HPP
 #define THIN_LENS_CAMERA_HPP
 
+#include "MathUtils.hpp"
 #include "sobol.h"
-#include <Eigen/Dense>
-#include <iostream>
-#include <opencv2/calib3d.hpp>
-#include <opencv2/core.hpp>
-#include <opencv2/highgui.hpp>
-#include <opencv2/imgproc.hpp>
+
+#define MAX_TILT_ANGLE_IN_DEG 89.99
+#define MIN_PIXEL_MARGIN  3.0
+#define MIN_MARKER_BITMAP_RESOLUTION 1000
 
 class ThinLensCamera {
 public:
@@ -29,6 +28,7 @@ public:
     double lightWaveLength = -1.0;
     double backgroundIntensity = 0.5;
     std::string unit = "";
+    std::string brand = "";
 
     // Marker parameters (can be modified before calling the render method)
     cv::Mat markerBitmap;
@@ -51,11 +51,6 @@ public:
     double focalLength;
     double lensRadius;
     double lensToSensorDistance;
-
-    // Other parameters
-    double MAX_TILT_ANGLE_IN_DEG = 89.99;
-    double MIN_PIXEL_MARGIN = 3.0;
-    std::string brand = "";
 
     ThinLensCamera(const std::string &ymlFilename, const std::string &bitmapFilename);
 
@@ -84,27 +79,27 @@ public:
      */
     virtual void readMarkerBitmap(const std::string &bitmapFilename);
 
-    inline double circleOfConfusionRadiusInPixels(double objectDistance) {
-        return std::fabs(lensRadius * focalLength * (objectDistance - focusDistance) / objectDistance / (focalLength + focusDistance) / pixelPitch);
-    }
+    virtual double circleOfConfusionRadiusInPixels(double objectDistance);
 
     virtual double airyDiskRadiusInPixels() const;
+    
+    virtual double airyDiskRadius() const;
 
     /** Returns the angle of view measured diagonally. */
     virtual double angleOfViewInDeg() const;
-    
+
     /** Returns the distance between the nearest and the farthest planes that are in acceptably sharp focus. */
     virtual double depthOfField() const;
-    
+
     /** Returns the distance from sharp foreground */
     virtual double nearDepthOfFieldLimit() const;
 
     /** Returns the distance from sharp background */
     virtual double farDepthOfFieldLimit() const;
-    
+
     /** Returns the focus distance that maximize the depth of field */
     virtual double hyperfocalDistance() const;
-    
+
     /** Returns the coordinates of the four marker corners in the image (pixels). */
     std::vector<cv::Point2d> markerCorners(const cv::Vec3d &rvec, const cv::Vec3d &tvec) const;
 
@@ -138,27 +133,13 @@ protected:
     virtual void computeEdgeMaps();
 
     virtual void refineImageWithAdaptiveSampling();
-
-    virtual void addDiffractionBlur();
     
+    virtual void addDiffractionBlur();
+
     virtual void applyGammaCorrection();
 
     virtual void quantifyOutputImage(cv::Mat &outputImage);
-
-    inline void concentricMapping(double &ux, double &uy) {
-        if (ux != 0.0 || uy != 0.0) {
-            double theta, r;
-            if (std::abs(ux) > std::abs(uy)) {
-                r = ux;
-                theta = M_PI_4 * uy / ux;
-            } else {
-                r = uy;
-                theta = M_PI_2 - M_PI_4 * ux / uy;
-            }
-            ux = r * std::cos(theta);
-            uy = r * std::sin(theta);
-        }
-    }
+    
 };
 
 std::ostream &operator<<(std::ostream &os, const ThinLensCamera &camera);

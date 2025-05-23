@@ -4,18 +4,7 @@
  * Copyright (c) 2025 CNRS, ENSMM, UMLP.
  */
 
-#include <math.h>
-
 #include "ThinLensCamera.hpp"
-
-#ifndef M_PI
-#define M_PI        3.14159265358979323846264338327950288   /* pi             */
-#define M_PI_2      1.57079632679489661923132169163975144   /* pi/2           */
-#define M_PI_4      0.785398163397448309615660845819875721  /* pi/4           */
-#include "j1.h" /* first order Bessel function */
-#endif
-
-#define FIRST_ZERO_RADIUS 1.2196698912665045
 
 ThinLensCamera::ThinLensCamera(const std::string &ymlFilename, const std::string &bitmapFilename) {
     readCameraParameters(ymlFilename);
@@ -137,6 +126,11 @@ void ThinLensCamera::readMarkerBitmap(const std::string &bitmapFilename) {
     }
     markerBitmap.convertTo(markerBitmap, CV_64F, 1);
     cv::normalize(markerBitmap, markerBitmap, 1.0, 0, cv::NORM_MINMAX);
+    int minRowCol = std::min(markerBitmap.rows, markerBitmap.cols);
+    if (minRowCol < MIN_MARKER_BITMAP_RESOLUTION) {
+        int factor = (MIN_MARKER_BITMAP_RESOLUTION / minRowCol) + 1;
+        cv::resize(markerBitmap, markerBitmap, cv::Size(factor * markerBitmap.cols, factor * markerBitmap.rows), 0, 0, cv::INTER_NEAREST);
+    }
 }
 
 void ThinLensCamera::computeRayTracingMetricParameters() {
@@ -179,7 +173,7 @@ void ThinLensCamera::computeFrameTransforms(const cv::Vec3d &rvec, const cv::Vec
 
     Eigen::Vector3d rayDirection(0.0, 0.0, 1.0);
     double cosAngle = markerNormal.dot(rayDirection);
-    if (cosAngle < cos(MAX_TILT_ANGLE_IN_DEG * M_PI / 180.0)) {
+    if (cosAngle < cos(MAX_TILT_ANGLE_IN_DEG * PI / 180.0)) {
         throw std::runtime_error("The marker is not visible (tilt angle too large)");
     }
 
@@ -308,16 +302,21 @@ void ThinLensCamera::refineImageWithAdaptiveSampling() {
 #pragma omp parallel for num_threads(omp_get_num_procs())
     for (int row = rowMin; row < rowMax; row++) {
         for (int col = colMin; col < colMax; col++) {
-
+            
+            int pixelIndex = col + row * colMax;
+            
             if (distanceToEdgeMap.at<float>(row, col) < confusionMap.at<double>(row, col) || distanceToEdgeMap.at<float>(row, col) < 1.0) {
 
                 for (int colLens = 0; colLens < sqrtNbRays; colLens++) {
                     for (int rowLens = 0; rowLens < sqrtNbRays; rowLens++) {
 
                         countMap.at<int>(row, col) += 1;
+                        
+                        int sobolIndex = colLens + (rowLens * sqrtNbRays) + pixelIndex*sqrtNbRays*sqrtNbRays;
+                        //int sobolIndex = colLens + (rowLens * sqrtNbRays); // same sampling for every pixels
 
-                        double rx = sobol::sample(colLens + (rowLens * sqrtNbRays), 1) - 0.5;
-                        double ry = sobol::sample(colLens + (rowLens * sqrtNbRays), 2) - 0.5;
+                        double rx = sobol::sample(sobolIndex, 1) - 0.5;
+                        double ry = sobol::sample(sobolIndex, 2) - 0.5;
 
                         double xSensor = (distortionMapX.at<float>(row, col) - principalPointX + rx) * pixelPitch * inverseRectificationCoeff;
                         double ySensor = (distortionMapY.at<float>(row, col) - principalPointY + ry) * pixelPitch * inverseRectificationCoeff;
@@ -352,57 +351,29 @@ void ThinLensCamera::refineImageWithAdaptiveSampling() {
     }
 }
 
-//void ThinLensCamera::addDiffractionBlur() {
-//    double sigma = airyDiskRadiusInPixels();
-//    int kernelSize = (int) (6 * sigma);
-//    if (kernelSize % 2 == 0) {
-//        kernelSize++;
-//    }
-//    cv::GaussianBlur(intensityMap, intensityMap, cv::Size(kernelSize, kernelSize), sigma);
-//}
-
 void ThinLensCamera::addDiffractionBlur() {
-
-    double radius = 2 * airyDiskRadiusInPixels();
-    int kernelSize = (int) (8 * radius);
-    if (kernelSize % 2 == 0) {
-        kernelSize++;
-    }
-    int center = (kernelSize - 1) / 2;
-    cv::Mat kernel = cv::Mat::zeros(cv::Size(kernelSize, kernelSize), CV_64F);
-    double coefficientSum = 0.0;
-    for (int row = 0; row < kernel.rows; row++) {
-        for (int col = 0; col < kernel.cols; col++) {
-            if (col == center && row == center) {
-                kernel.at<double>(row, col) = 1.0;
-            } else {
-                double distance = std::hypot(col - center, row - center);
-                double x = FIRST_ZERO_RADIUS * M_PI * distance / radius;
-                kernel.at<double>(row, col) = 2 * j1(x) / x;
-                kernel.at<double>(row, col) *= kernel.at<double>(row, col);
-            }
-            coefficientSum += kernel.at<double>(row, col);
-        }
-    }
-    kernel = kernel / coefficientSum;
+    cv::Mat kernel;
+    discreteAiryKernel(airyDiskRadiusInPixels(), kernel);
     cv::filter2D(intensityMap, intensityMap, CV_64F, kernel);
 }
 
+double ThinLensCamera::circleOfConfusionRadiusInPixels(double objectDistance) {
+        return std::fabs(lensRadius * focalLength * (objectDistance - focusDistance) / objectDistance / (focalLength + focusDistance) / pixelPitch);
+    }
+
 double ThinLensCamera::airyDiskRadiusInPixels() const {
-    return FIRST_ZERO_RADIUS * lightWaveLength * lensToSensorDistance / lensRadius / 2 / pixelPitch;
+    return airyDiskRadius() / pixelPitch;
+}
+
+double ThinLensCamera::airyDiskRadius() const {
+    return 0.5 * AIRY_FIRST_ZERO_RADIUS * lightWaveLength * lensToSensorDistance / lensRadius;
 }
 
 void ThinLensCamera::applyGammaCorrection() {
     for (int row = rowMin; row < rowMax; row++) {
         for (int col = colMin; col < colMax; col++) {
             double lightIntensity = intensityMap.at<double>(row, col);
-            double videoSignal;
-            if (lightIntensity <= 0.018) {
-                videoSignal = 4.5 * lightIntensity;
-            } else {
-                videoSignal = 1.099 * std::pow(lightIntensity, 0.45) - 0.099;
-            }
-            intensityMap.at<double>(row, col) = videoSignal;
+            intensityMap.at<double>(row, col) = gammaCorrection(lightIntensity);
         }
     }
 }
@@ -417,7 +388,7 @@ void ThinLensCamera::quantifyOutputImage(cv::Mat & outputImage) {
 
 double ThinLensCamera::angleOfViewInDeg() const {
     double diagonal = pixelPitch * sqrt(imageHeight * imageHeight + imageWidth * imageWidth);
-    return 360 * atan2(diagonal, 2 * focalLength) / M_PI;
+    return 360 * atan2(diagonal, 2 * focalLength) / PI;
 }
 
 double ThinLensCamera::depthOfField() const {

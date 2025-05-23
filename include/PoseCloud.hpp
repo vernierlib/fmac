@@ -7,10 +7,7 @@
 #ifndef POSE_CLOUD_HPP
 #define POSE_CLOUD_HPP
 
-#include <cmath>
-#include <iostream>
-#include <opencv2/calib3d.hpp>
-#include <opencv2/core.hpp>
+#include "MathUtils.hpp"
 #include "halton_sampler_6.h"
 #include "PoseBox.hpp"
 #include "ThinLensCamera.hpp"
@@ -110,17 +107,5 @@ private:
 
 /// @brief Prints all the poses of the cloud in the output stream.
 std::ostream &operator<<(std::ostream &os, const PoseCloud &cloud);
-
-/// Calculates rotation matrix given Tait-Bryan angles.
-void taitBryanAnglesToRotationMatrix(double roll, double pitch, double yaw, cv::Mat & result);
-
-/// Calculates Tait-Bryan angle given a rotation matrix.
-void rotationMatrixToTaitBryanAngles(const cv::Mat & rmat, double & roll, double & pitch, double & yaw);
-
-/// Scales a value from [0;1[ to [min;max[
-double scale(double value, double min, double max);
-
-/// Returns true if mat is a rotation matrix 
-bool isRotationMatrix(const cv::Mat &mat);
 
 #endif
