@@ -5,6 +5,7 @@
  */
 
 #include "TelecentricCamera.hpp"
+#include "sobol.h"
 
 TelecentricCamera::TelecentricCamera(const std::string &ymlFilename, const std::string &bitmapFilename)
 : ThinLensCamera(ymlFilename, bitmapFilename) {

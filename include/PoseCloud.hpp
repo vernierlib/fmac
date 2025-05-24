@@ -8,7 +8,6 @@
 #define POSE_CLOUD_HPP
 
 #include "MathUtils.hpp"
-#include "halton_sampler_6.h"
 #include "PoseBox.hpp"
 #include "ThinLensCamera.hpp"
 

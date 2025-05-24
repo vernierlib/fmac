@@ -5,6 +5,7 @@
  */
 
 #include "PoseCloud.hpp"
+#include "halton_sampler_6.h"
 
 PoseCloud::PoseCloud(int seed, int poseCount, PoseBox box) {
     this->seed = seed;

@@ -5,6 +5,7 @@
  */
 
 #include "ThinLensCamera.hpp"
+#include "sobol.h"
 
 ThinLensCamera::ThinLensCamera(const std::string &ymlFilename, const std::string &bitmapFilename) {
     readCameraParameters(ymlFilename);

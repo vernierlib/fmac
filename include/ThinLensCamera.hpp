@@ -8,7 +8,6 @@
 #define THIN_LENS_CAMERA_HPP
 
 #include "MathUtils.hpp"
-#include "sobol.h"
 
 #define MAX_TILT_ANGLE_IN_DEG 89.99
 #define MIN_PIXEL_MARGIN  3.0
