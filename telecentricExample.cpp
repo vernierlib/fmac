@@ -15,6 +15,7 @@ int main() {
     
     Mat image;
     camera.render(rvec, tvec, image);
+    cout << "Done!" << endl;
     
     imshow("Rendered image", image);
     waitKey(0);

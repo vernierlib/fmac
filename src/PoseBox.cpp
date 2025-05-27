@@ -79,7 +79,7 @@ void PoseBox::read(const std::string &filename) {
     file["pitch_min"] >> pitchMin;
     file["pitch_max"] >> pitchMax;
     file["roll_min"] >> rollMin;
-    file["roll_mMax"] >> rollMax;
+    file["roll_max"] >> rollMax;
     file["x_min"] >> xMin;
     file["x_max"] >> xMax;
     file["y_min"] >> yMin;

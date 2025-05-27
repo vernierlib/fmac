@@ -24,8 +24,9 @@ int main() {
         Mat tvec = extrinsicParameters(Rect(3, frame, 3, 1));
 
         Mat image;
-        cout << "Rendering..." << endl;
+        cout << "Rendering image " << frame + 1 << "/" << extrinsicParameters.rows << "..." << endl;
         camera.render(rvec, tvec, image);
+        cout << "Done!" << endl;
 
         imwrite("data/opencv/render" + to_string(frame + 1) + ".jpg", image);
         image.convertTo(image, CV_32F);

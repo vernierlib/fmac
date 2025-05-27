@@ -65,7 +65,7 @@ int main() {
     if (keyCode != 27) {
         cout << "Writing cloud file..." << endl;
         cloud.write(folder + "estimatedPoses.json");
-        cout << "Completed. " << endl;
+        cout << "Done!" << endl;
     } else {
         cout << "Stopped by user!" << endl;
     }
