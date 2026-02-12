@@ -2,8 +2,6 @@
 
 [![Contact](https://img.shields.io/badge/contact-form-green.svg)](https://projects.femto-st.fr/vernier/contact) 
 [![GPL](https://img.shields.io/badge/license-GPLv3-blue)](https://www.gnu.org/licenses/gpl-3.0.en.html)
-![Static Badge](https://img.shields.io/badge/C++-hand coded-orange)
-
 
 The Fiducial Marker Accuracy Comparator is an open-source C++ library for rendering synthetic images of fiducial markers like ArUco, AprilTag, ARTag, STag, TopoTag and all others.
 
