@@ -6,18 +6,24 @@
 
 #include "PoseCloud.hpp"
 #include "halton_sampler_6.h"
+#include <fstream>
 
-PoseCloud::PoseCloud(int seed, int poseCount, PoseBox box) {
-    this->seed = seed;
+PoseCloud::PoseCloud(int poseCount) {
+    this->seed = 0;
     this->poseCount = poseCount;
-    this->box = box;
+    this->box = PoseBox();
 
-    // Initilize the matrices
+    // Initialize the matrices
     rvec = cv::Mat::zeros(poseCount, 3, CV_64F);
     tvec = cv::Mat::zeros(poseCount, 3, CV_64F);
     rpy = cv::Mat::zeros(poseCount, 3, CV_64F);
     markerCorners = cv::Mat::zeros(poseCount, 8, CV_64F);
     checkParameters();
+}
+
+PoseCloud::PoseCloud(int seed, int poseCount, PoseBox box) : PoseCloud(poseCount) {
+    this->seed = seed;
+    this->box = box;
 
     // Initialize Halton sampler with seed
     Halton_sampler haltonSampler;
@@ -77,7 +83,11 @@ PoseCloud::PoseCloud(int seed, int poseCount, PoseBox box, const ThinLensCamera 
 }
 
 PoseCloud::PoseCloud(const std::string &filename) {
-    read(filename);
+    if (filename.substr(filename.size()-3,3)=="csv") {
+        readCSV(filename);
+    } else {
+        read(filename);
+    }
 }
 
 void PoseCloud::checkParameters() {
@@ -118,6 +128,39 @@ void PoseCloud::read(const std::string &filename) {
     checkParameters();
 }
 
+void PoseCloud::readCSV(const std::string &filename) {
+
+    std::ifstream file(filename);
+    std::string line;
+
+    // Count the number of poses
+    int poseCount = 0;
+    std::getline(file, line);
+    while (std::getline(file, line) && line.size() > 0) {
+        poseCount++;
+    }
+
+    rvec = cv::Mat::zeros(poseCount, 3, CV_64F);
+    tvec = cv::Mat::zeros(poseCount, 3, CV_64F);
+    rpy = cv::Mat::zeros(poseCount, 3, CV_64F);
+    markerCorners = cv::Mat::zeros(poseCount, 8, CV_64F);
+
+    // Parse the file
+    file.clear();
+    file.seekg(0);
+    std::getline(file, line);
+    while (std::getline(file, line) && line.size() > 0) {
+        std::replace(line.begin(), line.end(), ';', ' ');
+
+        int index;
+        double rx, ry, rz, tx, ty, tz;
+        std::stringstream stream(line);
+        stream >> index >> rx >> ry >> rz >> tx >> ty >> tz;
+        setRVec(index-1, rx, ry, rz);
+        setTVec(index-1, tx, ty, tz); 
+    }
+}
+
 cv::Vec3d PoseCloud::getRVec(int index) {
     cv::Vec3d result;
     result(0) = rvec.at<double>(index, 0);
@@ -140,10 +183,10 @@ void PoseCloud::setTVec(int index, const cv::Mat & tvec) {
     this->tvec.at<double>(index, 2) = tvec.at<double>(2);
 }
 
-void PoseCloud::setTVec(int index, double x, double y, double z) {
-    this->tvec.at<double>(index, 0) = x;
-    this->tvec.at<double>(index, 1) = y;
-    this->tvec.at<double>(index, 2) = z;
+void PoseCloud::setTVec(int index, double tx, double ty, double tz) {
+    this->tvec.at<double>(index, 0) = tx;
+    this->tvec.at<double>(index, 1) = ty;
+    this->tvec.at<double>(index, 2) = tz;
 }
 
 void PoseCloud::setTaitBryanAngles(int index, double roll, double pitch, double yaw) {
@@ -168,6 +211,21 @@ void PoseCloud::setRVec(int index, const cv::Mat & rvec) {
 
     cv::Mat rmat;
     cv::Rodrigues(rvec, rmat);
+    double roll, pitch, yaw;
+    rotationMatrixToTaitBryanAngles(rmat, roll, pitch, yaw);
+
+    rpy.at<double>(index, 0) = roll;
+    rpy.at<double>(index, 1) = pitch;
+    rpy.at<double>(index, 2) = yaw;
+}
+
+void PoseCloud::setRVec(int index, double rx, double ry, double rz) {
+    this->rvec.at<double>(index, 0) = rx;
+    this->rvec.at<double>(index, 1) = ry;
+    this->rvec.at<double>(index, 2) = rz;
+
+    cv::Mat rmat;
+    cv::Rodrigues(rvec.row(index), rmat);
     double roll, pitch, yaw;
     rotationMatrixToTaitBryanAngles(rmat, roll, pitch, yaw);
 

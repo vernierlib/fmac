@@ -13,6 +13,10 @@
 
 class PoseCloud {
 public:
+    
+    /// @brief Creates a blank cloud.
+    /// @param poseCount Number of pose to generate
+    PoseCloud(int poseCount);
 
     /// @brief Creates a cloud of randomly generated poses uniformly spread inside a rectangular box.
     /// @param seed Seed of the Halton sampler
@@ -28,7 +32,7 @@ public:
     PoseCloud(int seed, int poseCount, PoseBox box, const ThinLensCamera & camera);
 
     /// @brief Creates a cloud of poses from a file.
-    /// @param filename Name of the file to open. Extension of the file (.xml, .yml/.yaml or .json) determines its format (XML, YAML or JSON respectively). Also you can append .gz to work with compressed files, for example myHugeCloud.xml.gz
+    /// @param filename Name of the file to open. Extension of the file (.xml, .yml/.yaml, .json or .csv) determines its format (XML, YAML or JSON respectively). Also you can append .gz to work with compressed files, for example myHugeCloud.xml.gz
     PoseCloud(const std::string & filename);
 
     /// @brief Saves a cloud of poses in a file. 
@@ -38,6 +42,11 @@ public:
     /// @brief Loads a cloud of poses from a file.
     /// @param filename Name of the file to open. Extension of the file (.xml, .yml/.yaml or .json) determines its format (XML, YAML or JSON respectively). Also you can append .gz to work with compressed files, for example myHugeCloud.xml.gz
     void read(const std::string & filename);
+    
+    /// @brief Loads a cloud of poses from a CSV file.
+    /// The columns must be index;rvec_x;rvec_y;rvec_z;tvec_x;tvec_y;tvec_z
+    /// @param filename Name of the file to open. 
+    void readCSV(const std::string & filename);
 
     /// Returns the number of poses of the cloud.
 
@@ -73,13 +82,16 @@ public:
     void setTVec(int index, const cv::Mat & tvec);
 
     /// @brief Sets the translation vector at a given index.
-    void setTVec(int index, double x, double y, double z);
+    void setTVec(int index, double tx, double ty, double tz);
 
     /// @brief Sets the rotation vector at a given index.
     void setTaitBryanAngles(int index, double roll, double pitch, double yaw);
 
     /// @brief Sets the rotation vector at a given index.
     void setRVec(int index, const cv::Mat & rvec);
+    
+    /// @brief Sets the rotation vector at a given index.
+    void setRVec(int index, double rx, double ry, double rz);
 
     /// @brief Sets the vector of the four marker corners.
     void setMarkerCorners(int index, const std::vector<cv::Point2d> & corners);
