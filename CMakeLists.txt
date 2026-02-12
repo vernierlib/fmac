@@ -35,22 +35,19 @@ message(STATUS "    library path: ${OpenMP_CXX_LIBRARIES}")
 message(STATUS "    libraries: ${OpenMP_CXX_LIB_NAMES}")
 endif()
 
+# Library built
+add_subdirectory(src)
+
 # Executable target built
 file(GLOB FILES *.cpp)
 foreach(file ${FILES})
   get_filename_component(filename ${file} NAME) 
   get_filename_component(targetname ${file} NAME_WLE) 
-  add_executable(${targetname} ${filename} src/ThinLensCamera.cpp src/TelecentricCamera.cpp src/PoseBox.cpp src/PoseCloud.cpp 3rdparty/gruenschloss/kuo-2d-proj/sobol.cpp 3rdparty/bessel/j1.c)
+  add_executable(${targetname} ${filename})
   target_include_directories(${targetname} PUBLIC "${CMAKE_SOURCE_DIR}/include")
-  target_include_directories(${targetname} PUBLIC "${CMAKE_SOURCE_DIR}/3rdparty/gruenschloss/kuo-2d-proj")
-  target_include_directories(${targetname} PUBLIC "${CMAKE_SOURCE_DIR}/3rdparty/gruenschloss/halton")
-  target_include_directories(${targetname} PUBLIC "${CMAKE_SOURCE_DIR}/3rdparty/bessel")
+  target_link_libraries(${targetname} PUBLIC fmac)
   target_link_libraries(${targetname} PUBLIC ${OpenCV_LIBS})
-  if(OpenMP_CXX_FOUND)
-    target_link_libraries(${targetname} PUBLIC OpenMP::OpenMP_CXX)
-  endif()
 endforeach(file)
-#target_include_directories(poseGeneration PUBLIC "${CMAKE_SOURCE_DIR}/3rdparty/gruenschloss/halton")
 
 # Copy data in the binary
 add_subdirectory(data/opencv)
