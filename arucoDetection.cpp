@@ -43,12 +43,13 @@ int main() {
             // set coordinate system
             double markerLength = camera.markerWidth;
             cv::Mat objPoints(4, 1, CV_32FC3);
-            objPoints.ptr<Vec3f>(0)[0] = Vec3f(-markerLength / 2.f, -markerLength / 2.f, 0);
-            objPoints.ptr<Vec3f>(0)[1] = Vec3f(markerLength / 2.f, -markerLength / 2.f, 0);
-            objPoints.ptr<Vec3f>(0)[2] = Vec3f(markerLength / 2.f, markerLength / 2.f, 0);
-            objPoints.ptr<Vec3f>(0)[3] = Vec3f(-markerLength / 2.f, markerLength / 2.f, 0);
-
-            solvePnP(objPoints, markerCorners[0], camera.cameraMatrix, camera.distortionCoefficients, rvec, tvec);
+            objPoints.ptr<Vec3f>(0)[3] = Vec3f(-markerLength / 2.f, -markerLength / 2.f, 0);
+            objPoints.ptr<Vec3f>(0)[2] = Vec3f(markerLength / 2.f, -markerLength / 2.f, 0);
+            objPoints.ptr<Vec3f>(0)[1] = Vec3f(markerLength / 2.f, markerLength / 2.f, 0);
+            objPoints.ptr<Vec3f>(0)[0] = Vec3f(-markerLength / 2.f, markerLength / 2.f, 0);
+            std::reverse(markerCorners[0].begin(),markerCorners[0].end());
+            
+            solvePnP(objPoints, markerCorners[0], camera.cameraMatrix, camera.distortionCoefficients, rvec, tvec, false, cv::SOLVEPNP_IPPE_SQUARE);
 
             cv::aruco::drawDetectedMarkers(imageRGB, markerCorners, markerIds);
             cv::drawFrameAxes(imageRGB, camera.cameraMatrix, camera.distortionCoefficients, rvec, tvec, camera.markerWidth * 1.5, 2);
