@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 3.10)
 
 # Project name
-project(fmac VERSION 1.0 LANGUAGES CXX)
+project(fmac VERSION 1.0 LANGUAGES C CXX)
 
 # Set build mode type
 set(CMAKE_BUILD_TYPE Release)

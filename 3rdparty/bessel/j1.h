@@ -3,6 +3,13 @@ Cephes Math Library Release 2.8:  June, 2000
 Copyright 1984, 1987, 1989, 2000 by Stephen L. Moshier
 */
 
+#ifndef J1_H
+#define J1_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  *
  *	Bessel function of order one
@@ -124,3 +131,9 @@ double y1(double x);
  */
 double polevl( double x, double coef[], int N);
 double p1evl( double x, double coef[], int N);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
