@@ -4,8 +4,10 @@ cmake_minimum_required(VERSION 3.10)
 # Project name
 project(fmac VERSION 1.0 LANGUAGES C CXX)
 
-# Set build mode type
-set(CMAKE_BUILD_TYPE Release)
+# Default to Release when no build type is given
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
+endif()
 
 # Find Eigen
 find_package(Eigen3 REQUIRED)
