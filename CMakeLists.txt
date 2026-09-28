@@ -13,7 +13,6 @@ message(STATUS "Eigen3 library status:")
 message(STATUS "    version: ${Eigen3_VERSION}")
 message(STATUS "    config: ${Eigen3_DIR}")
 message(STATUS "    include path: ${EIGEN3_INCLUDE_DIR}")
-add_definitions(-I${EIGEN3_INCLUDE_DIR})
 
 # Find OpenCV, you may need to set OpenCV_DIR variable
 # to the absolute path to the directory containing OpenCVConfig.cmake file
