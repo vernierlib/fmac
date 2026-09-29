@@ -1,6 +1,12 @@
 #include "ThinLensCamera.hpp"
 #include "PoseCloud.hpp"
+#include <opencv2/core/version.hpp>
+#if CV_VERSION_MAJOR > 4 || (CV_VERSION_MAJOR == 4 && CV_VERSION_MINOR >= 7)
 #include <opencv2/objdetect/aruco_detector.hpp>
+#else
+// ArUco was moved from opencv_contrib to objdetect in OpenCV 4.7
+#include <opencv2/aruco.hpp>
+#endif
 
 using namespace cv;
 using namespace std;
@@ -25,12 +31,20 @@ int main() {
 
         std::vector<int> markerIds;
         std::vector<std::vector < cv::Point2f>> markerCorners, rejectedCandidates;
+#if CV_VERSION_MAJOR > 4 || (CV_VERSION_MAJOR == 4 && CV_VERSION_MINOR >= 7)
         cv::aruco::DetectorParameters detectorParams = cv::aruco::DetectorParameters();
         detectorParams.cornerRefinementMethod = cv::aruco::CORNER_REFINE_SUBPIX;
 
         cv::aruco::Dictionary dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_6X6_250);
         cv::aruco::ArucoDetector detector(dictionary, detectorParams);
         detector.detectMarkers(image, markerCorners, markerIds, rejectedCandidates);
+#else
+        cv::Ptr<cv::aruco::DetectorParameters> detectorParams = cv::aruco::DetectorParameters::create();
+        detectorParams->cornerRefinementMethod = cv::aruco::CORNER_REFINE_SUBPIX;
+
+        cv::Ptr<cv::aruco::Dictionary> dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_6X6_250);
+        cv::aruco::detectMarkers(image, dictionary, markerCorners, markerIds, detectorParams, rejectedCandidates);
+#endif
 
         Mat imageRGB;
         merge(std::vector<Mat>({image, image, image}), imageRGB);
