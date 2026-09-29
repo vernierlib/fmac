@@ -2,10 +2,12 @@
 cmake_minimum_required(VERSION 3.10)
 
 # Project name
-project(fmac VERSION 1.0 LANGUAGES CXX)
+project(fmac VERSION 1.0 LANGUAGES C CXX)
 
-# Set build mode type
-set(CMAKE_BUILD_TYPE Release)
+# Default to Release when no build type is given
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
+endif()
 
 # Find Eigen
 find_package(Eigen3 REQUIRED)
@@ -13,7 +15,6 @@ message(STATUS "Eigen3 library status:")
 message(STATUS "    version: ${Eigen3_VERSION}")
 message(STATUS "    config: ${Eigen3_DIR}")
 message(STATUS "    include path: ${EIGEN3_INCLUDE_DIR}")
-add_definitions(-I${EIGEN3_INCLUDE_DIR})
 
 # Find OpenCV, you may need to set OpenCV_DIR variable
 # to the absolute path to the directory containing OpenCVConfig.cmake file

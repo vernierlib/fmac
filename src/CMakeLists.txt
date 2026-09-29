@@ -1,4 +1,4 @@
-file(GLOB HEADERS *.hpp)
+file(GLOB HEADERS ${CMAKE_SOURCE_DIR}/include/*.hpp)
 
 file(GLOB SOURCES *.cpp)
 
@@ -9,11 +9,11 @@ target_include_directories(fmac PUBLIC "${CMAKE_SOURCE_DIR}/3rdparty/gruenschlos
 target_include_directories(fmac PUBLIC "${CMAKE_SOURCE_DIR}/3rdparty/gruenschloss/halton")
 target_include_directories(fmac PUBLIC "${CMAKE_SOURCE_DIR}/3rdparty/bessel")
 
-target_link_libraries(fmac PUBLIC ${OpenCV_LIBS})
+target_link_libraries(fmac PUBLIC Eigen3::Eigen ${OpenCV_LIBS})
 if(OpenMP_CXX_FOUND)
   target_link_libraries(fmac PUBLIC OpenMP::OpenMP_CXX)
 endif()
 
 install(TARGETS fmac DESTINATION lib)
 
-install(FILES ${HEADERS} DESTINATION include/${CMAKE_PROJECT_NAME})
+install(FILES ${HEADERS} ${CMAKE_SOURCE_DIR}/3rdparty/bessel/j1.h DESTINATION include/${CMAKE_PROJECT_NAME})
