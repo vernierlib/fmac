@@ -28,10 +28,12 @@ Install the dependencies with [Homebrew](https://brew.sh/):
 
 	% brew install cmake eigen opencv libomp
 
-Homebrew does not link `libomp` into the default search paths, so give its location to CMake when configuring:
+Then, open a terminal in the directory of the package and run:
 
-	% cmake -S . -B build -DOpenMP_ROOT=$(brew --prefix libomp)
+	% cmake -S . -B build
 	% cmake --build build
+
+CMake looks for `libomp` in its Homebrew prefix. To use another OpenMP installation, pass `-DOpenMP_ROOT=<path>` when configuring.
 
 ### Windows instructions
 

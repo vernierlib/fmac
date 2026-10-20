@@ -1,5 +1,5 @@
 # cmake needs this line
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.10...3.31)
 
 # Project name
 project(fmac VERSION 1.0 LANGUAGES C CXX)
@@ -27,6 +27,29 @@ message(STATUS "    include path: ${OpenCV_INCLUDE_DIRS}")
 message(STATUS "    libraries: ${OpenCV_LIBS}")
 
 # Find OpenMP (optional)
+# Drop OpenMP paths cached by a previous configure if they no longer exist,
+# e.g. after Homebrew upgraded the package that provided libomp
+foreach(lib IN LISTS OpenMP_CXX_LIB_NAMES)
+  if(DEFINED OpenMP_${lib}_LIBRARY AND NOT EXISTS "${OpenMP_${lib}_LIBRARY}")
+    foreach(stale IN LISTS OpenMP_CXX_LIB_NAMES)
+      unset(OpenMP_${stale}_LIBRARY CACHE)
+    endforeach()
+    unset(OpenMP_CXX_FLAGS CACHE)
+    unset(OpenMP_CXX_LIB_NAMES CACHE)
+    break()
+  endif()
+endforeach()
+# Homebrew does not link libomp into the default search paths
+if(APPLE AND NOT DEFINED OpenMP_ROOT AND NOT DEFINED ENV{OpenMP_ROOT})
+  find_program(BREW_EXECUTABLE brew)
+  if(BREW_EXECUTABLE)
+    execute_process(COMMAND ${BREW_EXECUTABLE} --prefix libomp
+      OUTPUT_VARIABLE BREW_LIBOMP_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+    if(EXISTS "${BREW_LIBOMP_PREFIX}")
+      set(OpenMP_ROOT "${BREW_LIBOMP_PREFIX}")
+    endif()
+  endif()
+endif()
 find_package(OpenMP)
 if(OpenMP_CXX_FOUND)
 message(STATUS "OpenMP_CXX library status:")
