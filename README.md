@@ -82,7 +82,7 @@ The build produces the `fmac` static library and a few example programs. CMake c
 
 This software is part of the Vernier Library that is written and maintained by researchers with the FEMTO-ST Institute located in Besançon, France.
 
-Authors: Guillaume J. Laurent, Patrick Sandoz
+Authors: Guillaume J. Laurent, Patrick Sandoz, Sasha Ballet
 
 Contact: [vernier@femto-st.fr](mailto:vernier@femto-st.fr)
 
