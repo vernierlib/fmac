@@ -35,7 +35,8 @@ void ThinLensCamera::showMaps() {
     cv::moveWindow("Count map", 50, 50);
 
     cv::Mat image1;
-    distanceToEdgeMap.convertTo(image1, CV_8U, 1);
+    //distanceToEdgeMap.convertTo(image1, CV_8U, 1);
+    cv::normalize(distanceToEdgeMap, image1, 1.0, 0, cv::NORM_MINMAX);
     cv::imshow("Distance-to-egde map", image1);
     cv::moveWindow("Distance-to-egde map", 50, 500);
 
@@ -260,6 +261,7 @@ void ThinLensCamera::computeEdgeMaps() {
         }
     }
     cv::distanceTransform(edgeMap(cv::Rect(colMin, rowMin, colMax - colMin, rowMax - rowMin)), distanceToEdgeMap(cv::Rect(colMin, rowMin, colMax - colMin, rowMax - rowMin)), cv::DIST_L2, 0);
+    
 }
 
 void ThinLensCamera::refineImageWithAdaptiveSampling() {
@@ -271,7 +273,7 @@ void ThinLensCamera::refineImageWithAdaptiveSampling() {
             
             int pixelIndex = col + row * colMax;
             
-            if (distanceToEdgeMap.at<float>(row, col) < confusionMap.at<double>(row, col) || distanceToEdgeMap.at<float>(row, col) < 1.0) {
+            //if (distanceToEdgeMap.at<float>(row, col) < confusionMap.at<double>(row, col) || distanceToEdgeMap.at<float>(row, col) < 2.0) {
 
                 for (int colLens = 0; colLens < sqrtNbRays; colLens++) {
                     for (int rowLens = 0; rowLens < sqrtNbRays; rowLens++) {
@@ -312,7 +314,7 @@ void ThinLensCamera::refineImageWithAdaptiveSampling() {
                 if (countMap.at<int>(row, col) > 1) {
                     intensityMap.at<double>(row, col) /= countMap.at<int>(row, col);
                 }
-            }
+            //}
         }
     }
 }
