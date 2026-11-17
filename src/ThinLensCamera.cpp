@@ -228,8 +228,8 @@ void ThinLensCamera::computeSharpImageAndDepthMap() {
     confusionMap = cv::Mat::zeros(cv::Size(imageWidth, imageHeight), CV_64F);
     intensityMap = cv::Mat::ones(cv::Size(imageWidth, imageHeight), CV_64F) * backgroundIntensity;
     countMap = cv::Mat::zeros(cv::Size(imageWidth, imageHeight), CV_32S);
-    markerColMap = cv::Mat::zeros(cv::Size(imageWidth, imageHeight), CV_32S);
-    markerRowMap = cv::Mat::zeros(cv::Size(imageWidth, imageHeight), CV_32S);
+    markerColMap = cv::Mat::ones(cv::Size(imageWidth, imageHeight), CV_32S) * -1;
+    markerRowMap = cv::Mat::ones(cv::Size(imageWidth, imageHeight), CV_32S) * -1;
 
     raysCount = 0;
 
@@ -246,32 +246,31 @@ void ThinLensCamera::computeSharpImageAndDepthMap() {
 
             Eigen::Vector3d intersectionPoint = -raysCrossingPoint * markerDistance / markerNormal.dot(raysCrossingPoint);
             double depth = intersectionPoint.z();
-            depthMap.at<double>(row, col) = depth;
-            double confusion = circleOfConfusionRadiusInPixels(depth);
-            confusionMap.at<double>(row, col) = confusion;
+            if (depth > 0.0) {
+                depthMap.at<double>(row, col) = depth;
+                double confusion = circleOfConfusionRadiusInPixels(depth);
+                confusionMap.at<double>(row, col) = confusion;
 
-            int colIntersection = std::floor((markerOriginX + mTc(0, 0) * intersectionPoint.x() + mTc(0, 1) * intersectionPoint.y() + mTc(0, 2) * intersectionPoint.z() + mTc(0, 3)) / markerPixelWidth);
-            int rowIntersection = std::floor((markerOriginY + mTc(1, 0) * intersectionPoint.x() + mTc(1, 1) * intersectionPoint.y() + mTc(1, 2) * intersectionPoint.z() + mTc(1, 3)) / markerPixelHeight);
+                int colIntersection = std::floor((markerOriginX + mTc(0, 0) * intersectionPoint.x() + mTc(0, 1) * intersectionPoint.y() + mTc(0, 2) * intersectionPoint.z() + mTc(0, 3)) / markerPixelWidth);
+                int rowIntersection = std::floor((markerOriginY + mTc(1, 0) * intersectionPoint.x() + mTc(1, 1) * intersectionPoint.y() + mTc(1, 2) * intersectionPoint.z() + mTc(1, 3)) / markerPixelHeight);
 
-            if (colIntersection >= 0 && colIntersection < markerBitmap.cols && rowIntersection >= 0 && rowIntersection < markerBitmap.rows) {
-                intensityMap.at<double>(row, col) = markerBitmap.at<double>(rowIntersection, colIntersection);
-                markerColMap.at<int>(row, col) = colIntersection;
-                markerRowMap.at<int>(row, col) = rowIntersection;
-                if (depth > maxMarkerDepth) {
-                    maxMarkerDepth = depth;
+                if (colIntersection >= 0 && colIntersection < markerBitmap.cols && rowIntersection >= 0 && rowIntersection < markerBitmap.rows) {
+                    intensityMap.at<double>(row, col) = markerBitmap.at<double>(rowIntersection, colIntersection);
+                    markerColMap.at<int>(row, col) = colIntersection;
+                    markerRowMap.at<int>(row, col) = rowIntersection;
+                    if (depth > maxMarkerDepth) {
+                        maxMarkerDepth = depth;
+                    }
+                    if (depth < minMarkerDepth) {
+                        minMarkerDepth = depth;
+                    }
+                    if (confusion > maxMarkerConfusion) {
+                        maxMarkerConfusion = confusion;
+                    }
+                    if (confusion < minMarkerConfusion) {
+                        minMarkerConfusion = confusion;
+                    }
                 }
-                if (depth < minMarkerDepth) {
-                    minMarkerDepth = depth;
-                }
-                if (confusion > maxMarkerConfusion) {
-                    maxMarkerConfusion = confusion;
-                }
-                if (confusion < minMarkerConfusion) {
-                    minMarkerConfusion = confusion;
-                }
-            } else {
-                intensityMap.at<double>(row, col) = backgroundIntensity;
-                markerColMap.at<int>(row, col) = -1;
             }
         }
     }
@@ -321,7 +320,7 @@ void ThinLensCamera::refineImageWithAdaptiveSampling() {
 
             int pixelIndex = col + row * colMax;
 
-            if (distanceToEdgeMap.at<float>(row, col) < confusionMap.at<double>(row, col) || distanceToEdgeMap.at<float>(row, col) < 2.0) {
+            if (distanceToEdgeMap.at<float>(row, col) <= confusionMap.at<double>(row, col) || distanceToEdgeMap.at<float>(row, col) < 2.0) {
 
                 for (int colLens = 0; colLens < sqrtNbRays; colLens++) {
                     for (int rowLens = 0; rowLens < sqrtNbRays; rowLens++) {
@@ -338,7 +337,8 @@ void ThinLensCamera::refineImageWithAdaptiveSampling() {
                         double ySensor = (distortionMapY.at<float>(row, col) - principalPointY + ry) * pixelPitch * inverseRectificationCoeff;
                         Eigen::Vector3d raysCrossingPoint(xSensor * focusDistanceOverLensToSensorDistance, ySensor * focusDistanceOverLensToSensorDistance, focusDistance);
 
-                        Eigen::Vector3d lensPoint(lensRadius * (colLens * 2.0 / (sqrtNbRays - 1) - 1.0), lensRadius * (rowLens * 2.0 / (sqrtNbRays - 1) - 1.0), 0.0);
+                        //Eigen::Vector3d lensPoint(lensRadius * (colLens * 2.0 / (sqrtNbRays - 1) - 1.0), lensRadius * (rowLens * 2.0 / (sqrtNbRays - 1) - 1.0), 0.0);
+                        Eigen::Vector3d lensPoint(lensRadius * (2*sobol::sample(sobolIndex, 1) - 1), lensRadius * (2*sobol::sample(sobolIndex, 2) - 1), 0.0);
                         concentricMapping(lensPoint.x(), lensPoint.y());
 
                         Eigen::Vector3d rayDirection = raysCrossingPoint - lensPoint;
@@ -352,7 +352,7 @@ void ThinLensCamera::refineImageWithAdaptiveSampling() {
                         int colIntersection = std::floor((markerOriginX + mTc(0, 0) * intersectionPoint.x() + mTc(0, 1) * intersectionPoint.y() + mTc(0, 2) * intersectionPoint.z() + mTc(0, 3)) / markerPixelWidth);
                         int rowIntersection = std::floor((markerOriginY + mTc(1, 0) * intersectionPoint.x() + mTc(1, 1) * intersectionPoint.y() + mTc(1, 2) * intersectionPoint.z() + mTc(1, 3)) / markerPixelHeight);
 
-                        if (colIntersection >= 0 && colIntersection < markerBitmap.cols && rowIntersection >= 0 && rowIntersection < markerBitmap.rows) {
+                        if (depth > 0.0 && colIntersection >= 0 && colIntersection < markerBitmap.cols && rowIntersection >= 0 && rowIntersection < markerBitmap.rows) {
                             intensityMap.at<double>(row, col) += markerBitmap.at<double>(rowIntersection, colIntersection);
                         } else {
                             intensityMap.at<double>(row, col) += backgroundIntensity;
