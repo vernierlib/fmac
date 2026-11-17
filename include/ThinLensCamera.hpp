@@ -38,6 +38,7 @@ public:
     // Results
     const int minIntensityValue = 0;
     int maxIntensityValue;
+    long raysCount;
     double minMarkerDepth;
     double maxMarkerDepth;
     double minMarkerConfusion;
@@ -48,9 +49,12 @@ public:
     cv::Mat confusionMap; // radius of the circle of confusion in pixels
     cv::Mat intensityMap;
     cv::Mat countMap;
+    cv::Mat markerColMap;
+    cv::Mat markerRowMap;
     double focalLength;
     double lensRadius;
     double lensToSensorDistance;
+    double renderingTime;
 
     ThinLensCamera(const std::string &ymlFilename, const std::string &bitmapFilename);
 

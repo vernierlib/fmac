@@ -26,19 +26,15 @@ int main() {
     cout << "Rendering... (may take several minutes)" << endl;
     camera.render(rvec, tvec, image);
 
-    cout << "Done!" << endl << "Depth and blur results:" << endl;
-    cout << "  | minimum pattern depth: " << camera.minMarkerDepth << " " << camera.unit << endl;
-    cout << "  | maximum pattern depth: " << camera.maxMarkerDepth << " " << camera.unit << endl;
-    cout << "  | minimum radius of the circle of confusion: " << camera.minMarkerConfusion << " px" << endl;
-    cout << "  | maximum radius of the circle of confusion: " << camera.maxMarkerConfusion << " px" << endl;
-    
+    cout << "Done!" << endl;
+
     camera.showMaps();
 
     image.convertTo(image, CV_32F);
     cv::normalize(image, image, 1.0, 0, cv::NORM_MINMAX);
     imshow("Rendered image", image);
     imwrite("data/matlab/render" + to_string(frame + 1) + ".tiff", image);
-   
+
     string filename = "data/matlab/image" + to_string(frame + 1) + ".jpg";
     Mat originalImage = imread(filename, IMREAD_GRAYSCALE);
     if (originalImage.empty()) {
@@ -50,24 +46,24 @@ int main() {
     imshow("Original image", originalImage);
 
     Mat originalZoom1 = originalImage(Rect(1438, 1338, 31, 31));
-    resize(originalZoom1, originalZoom1, Size(310, 310),0,0,INTER_NEAREST);
+    resize(originalZoom1, originalZoom1, Size(310, 310), 0, 0, INTER_NEAREST);
     imwrite("data/matlab/originalZoom1.tiff", originalZoom1);
     imshow("Zoom 1 on the original image", originalZoom1);
-    
+
     Mat imageZoom1 = image(Rect(1437, 1338, 31, 31));
-    resize(imageZoom1, imageZoom1, Size(310, 310),0,0,INTER_NEAREST);
+    resize(imageZoom1, imageZoom1, Size(310, 310), 0, 0, INTER_NEAREST);
     imwrite("data/matlab/imageZoom1.tiff", imageZoom1);
     imshow("Zoom 1 of rendered image", imageZoom1);
-    
+
     Mat originalZoom2 = originalImage(Rect(1413, 358, 31, 31));
-    resize(originalZoom2, originalZoom2, Size(310, 310),0,0,INTER_NEAREST);
+    resize(originalZoom2, originalZoom2, Size(310, 310), 0, 0, INTER_NEAREST);
     imwrite("data/matlab/originalZoom2.tiff", originalZoom2);
     imshow("Zoom 2 on the original image", originalZoom2);
-    
+
     Mat imageZoom2 = image(Rect(1412, 358, 31, 31));
-    resize(imageZoom2, imageZoom2, Size(310, 310),0,0,INTER_NEAREST);
+    resize(imageZoom2, imageZoom2, Size(310, 310), 0, 0, INTER_NEAREST);
     imwrite("data/matlab/imageZoom2.tiff", imageZoom2);
-    imshow("Zoom 2 of rendered image", imageZoom2);   
+    imshow("Zoom 2 of rendered image", imageZoom2);
 
     waitKey(0);
 

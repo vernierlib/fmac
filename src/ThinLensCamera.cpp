@@ -6,6 +6,7 @@
 
 #include "ThinLensCamera.hpp"
 #include "sobol.h"
+#include <chrono>
 
 ThinLensCamera::ThinLensCamera(const std::string &ymlFilename, const std::string &bitmapFilename) {
     readCameraParameters(ymlFilename);
@@ -16,6 +17,7 @@ ThinLensCamera::ThinLensCamera(const std::string &ymlFilename, const std::string
 
 void ThinLensCamera::render(const cv::Vec3d &rvec, const cv::Vec3d &tvec, cv::Mat &outputImage) {
     checkParameters();
+    std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
     computeRayTracingMetricParameters();
     computeFrameTransforms(rvec, tvec);
     computeRegionOfInterest(rvec, tvec);
@@ -25,6 +27,8 @@ void ThinLensCamera::render(const cv::Vec3d &rvec, const cv::Vec3d &tvec, cv::Ma
     addDiffractionBlur();
     applyGammaCorrection();
     quantifyOutputImage(outputImage);
+    std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
+    renderingTime = (std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1)).count();
 }
 
 void ThinLensCamera::showMaps() {
@@ -34,20 +38,31 @@ void ThinLensCamera::showMaps() {
     cv::imshow("Count map", image0);
     cv::moveWindow("Count map", 50, 50);
 
+    cv::imshow("Egde map", edgeMap);
+    cv::moveWindow("Egde map", 100, 100);
+
     cv::Mat image1;
     cv::normalize(distanceToEdgeMap, image1, 1.0, 0, cv::NORM_MINMAX);
     cv::imshow("Distance-to-egde map", image1);
-    cv::moveWindow("Distance-to-egde map", 50, 500);
+    cv::moveWindow("Distance-to-egde map", 150, 150);
 
     cv::Mat image2;
     cv::normalize(depthMap, image2, 1.0, 0, cv::NORM_MINMAX);
-    cv::imshow("Depth map (min: " + std::to_string(minMarkerDepth) + unit + ", max: " + std::to_string(maxMarkerDepth) + unit + ")", image2);
-    cv::moveWindow("Depth map", 500, 50);
+    cv::imshow("Depth map", image2);
+    cv::moveWindow("Depth map", 200, 200);
 
     cv::Mat image3;
     cv::normalize(confusionMap, image3, 1.0, 0, cv::NORM_MINMAX);
-    cv::imshow("Confusion map (min: " + std::to_string(minMarkerConfusion) + "px, max: " + std::to_string(maxMarkerConfusion) + "px)", image3);
-    cv::moveWindow("Confusion map", 500, 500);
+    cv::imshow("Confusion map", image3);
+    cv::moveWindow("Confusion map", 250, 250);
+
+    std::cout << "Rendering stats" << std::endl;
+    std::cout << "  | rendering time: " << renderingTime << " s" << std::endl;
+    std::cout << "  | casted rays count: " << raysCount << std::endl;
+    std::cout << "  | minimum pattern depth: " << minMarkerDepth << " " << unit << std::endl;
+    std::cout << "  | maximum pattern depth: " << maxMarkerDepth << " " << unit << std::endl;
+    std::cout << "  | minimum radius of the circle of confusion: " << minMarkerConfusion << " px" << std::endl;
+    std::cout << "  | maximum radius of the circle of confusion: " << maxMarkerConfusion << " px" << std::endl;
 }
 
 void ThinLensCamera::readCameraParameters(const std::string &filename) {
@@ -213,12 +228,17 @@ void ThinLensCamera::computeSharpImageAndDepthMap() {
     confusionMap = cv::Mat::zeros(cv::Size(imageWidth, imageHeight), CV_64F);
     intensityMap = cv::Mat::ones(cv::Size(imageWidth, imageHeight), CV_64F) * backgroundIntensity;
     countMap = cv::Mat::zeros(cv::Size(imageWidth, imageHeight), CV_32S);
+    markerColMap = cv::Mat::zeros(cv::Size(imageWidth, imageHeight), CV_32S);
+    markerRowMap = cv::Mat::zeros(cv::Size(imageWidth, imageHeight), CV_32S);
+
+    raysCount = 0;
 
 #pragma omp parallel for num_threads(omp_get_num_procs())
     for (int row = rowMin; row < rowMax; row++) {
         for (int col = colMin; col < colMax; col++) {
 
             countMap.at<int>(row, col) = 1;
+            raysCount++;
 
             double xSensor = (distortionMapX.at<float>(row, col) - principalPointX) * pixelPitch * inverseRectificationCoeff;
             double ySensor = (distortionMapY.at<float>(row, col) - principalPointY) * pixelPitch * inverseRectificationCoeff;
@@ -235,6 +255,8 @@ void ThinLensCamera::computeSharpImageAndDepthMap() {
 
             if (colIntersection >= 0 && colIntersection < markerBitmap.cols && rowIntersection >= 0 && rowIntersection < markerBitmap.rows) {
                 intensityMap.at<double>(row, col) = markerBitmap.at<double>(rowIntersection, colIntersection);
+                markerColMap.at<int>(row, col) = colIntersection;
+                markerRowMap.at<int>(row, col) = rowIntersection;
                 if (depth > maxMarkerDepth) {
                     maxMarkerDepth = depth;
                 }
@@ -249,6 +271,7 @@ void ThinLensCamera::computeSharpImageAndDepthMap() {
                 }
             } else {
                 intensityMap.at<double>(row, col) = backgroundIntensity;
+                markerColMap.at<int>(row, col) = -1;
             }
         }
     }
@@ -261,16 +284,32 @@ void ThinLensCamera::computeEdgeMaps() {
 #pragma omp parallel for num_threads(omp_get_num_procs())
     for (int row = rowMin + 1; row < rowMax - 1; row++) {
         for (int col = colMin + 1; col < colMax - 1; col++) {
+            // Intensity change checking
             double deltaLeft = std::fabs(intensityMap.at<double>(row, col) - intensityMap.at<double>(row, col - 1));
             double deltaRight = std::fabs(intensityMap.at<double>(row, col + 1) - intensityMap.at<double>(row, col));
             double deltaUp = std::fabs(intensityMap.at<double>(row, col) - intensityMap.at<double>(row - 1, col));
             double deltaDown = std::fabs(intensityMap.at<double>(row + 1, col) - intensityMap.at<double>(row, col));
             double deltaMax = std::max(std::max(deltaLeft, deltaRight), std::max(deltaUp, deltaDown));
             edgeMap.at<char>(row, col) = (char) (255 - 255 * deltaMax);
+
+            // High frequency checking
+            int deltaColLeft = std::abs(markerColMap.at<int>(row, col) - markerColMap.at<int>(row, col - 1));
+            int deltaColRight = std::fabs(markerColMap.at<int>(row, col + 1) - markerColMap.at<int>(row, col));
+            int deltaColUp = std::fabs(markerColMap.at<int>(row, col) - markerColMap.at<int>(row - 1, col));
+            int deltaColDown = std::fabs(markerColMap.at<int>(row + 1, col) - markerColMap.at<int>(row, col));
+            int deltaColMax = std::max(std::max(deltaColLeft, deltaColRight), std::max(deltaColUp, deltaColDown));
+            int deltaRowLeft = std::abs(markerRowMap.at<int>(row, col) - markerRowMap.at<int>(row, col - 1));
+            int deltaRowRight = std::fabs(markerRowMap.at<int>(row, col + 1) - markerRowMap.at<int>(row, col));
+            int deltaRowUp = std::fabs(markerRowMap.at<int>(row, col) - markerRowMap.at<int>(row - 1, col));
+            int deltaRowDown = std::fabs(markerRowMap.at<int>(row + 1, col) - markerRowMap.at<int>(row, col));
+            int deltaRowMax = std::max(std::max(deltaRowLeft, deltaRowRight), std::max(deltaRowUp, deltaRowDown));
+            if (std::max(deltaColMax, deltaRowMax) > 1) {
+                edgeMap.at<char>(row, col) = (char) 0;
+            }
         }
     }
-    cv::distanceTransform(edgeMap(cv::Rect(colMin, rowMin, colMax - colMin, rowMax - rowMin)), distanceToEdgeMap(cv::Rect(colMin, rowMin, colMax - colMin, rowMax - rowMin)), cv::DIST_L2, 0);
-    
+    cv::distanceTransform(edgeMap(cv::Rect(colMin, rowMin, colMax - colMin, rowMax - rowMin)), distanceToEdgeMap(cv::Rect(colMin, rowMin, colMax - colMin, rowMax - rowMin)), cv::DIST_L2, cv::DIST_MASK_PRECISE);
+
 }
 
 void ThinLensCamera::refineImageWithAdaptiveSampling() {
@@ -279,18 +318,18 @@ void ThinLensCamera::refineImageWithAdaptiveSampling() {
 #pragma omp parallel for num_threads(omp_get_num_procs())
     for (int row = rowMin; row < rowMax; row++) {
         for (int col = colMin; col < colMax; col++) {
-            
+
             int pixelIndex = col + row * colMax;
-            
-            //if (distanceToEdgeMap.at<float>(row, col) < confusionMap.at<double>(row, col) || distanceToEdgeMap.at<float>(row, col) < 2.0) {
+
+            if (distanceToEdgeMap.at<float>(row, col) < confusionMap.at<double>(row, col) || distanceToEdgeMap.at<float>(row, col) < 2.0) {
 
                 for (int colLens = 0; colLens < sqrtNbRays; colLens++) {
                     for (int rowLens = 0; rowLens < sqrtNbRays; rowLens++) {
 
                         countMap.at<int>(row, col) += 1;
-                        
-                        int sobolIndex = colLens + (rowLens * sqrtNbRays) + pixelIndex*sqrtNbRays*sqrtNbRays;
-                        //int sobolIndex = colLens + (rowLens * sqrtNbRays); // same sampling for every pixels
+                        raysCount++;
+
+                        int sobolIndex = colLens + (rowLens * sqrtNbRays) + pixelIndex * sqrtNbRays*sqrtNbRays;
 
                         double rx = sobol::sample(sobolIndex, 1) - 0.5;
                         double ry = sobol::sample(sobolIndex, 2) - 0.5;
@@ -323,7 +362,7 @@ void ThinLensCamera::refineImageWithAdaptiveSampling() {
                 if (countMap.at<int>(row, col) > 1) {
                     intensityMap.at<double>(row, col) /= countMap.at<int>(row, col);
                 }
-            //}
+            }
         }
     }
 }
@@ -335,8 +374,8 @@ void ThinLensCamera::addDiffractionBlur() {
 }
 
 double ThinLensCamera::circleOfConfusionRadiusInPixels(double objectDistance) {
-        return std::fabs(lensRadius * focalLength * (objectDistance - focusDistance) / objectDistance / (focalLength + focusDistance) / pixelPitch);
-    }
+    return std::fabs(lensRadius * focalLength * (objectDistance - focusDistance) / objectDistance / (focalLength + focusDistance) / pixelPitch);
+}
 
 double ThinLensCamera::airyDiskRadiusInPixels() const {
     return airyDiskRadius() / pixelPitch;
