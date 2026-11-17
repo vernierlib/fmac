@@ -9,6 +9,8 @@
 
 #include "ThinLensCamera.hpp"
 
+#define MIN_PIXEL_MARGIN  3.0
+
 class TelecentricCamera : public ThinLensCamera {
 public:
     

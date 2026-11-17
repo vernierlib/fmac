@@ -27,10 +27,10 @@ int main() {
     camera.render(rvec, tvec, image);
 
     cout << "Done!" << endl << "Depth and blur results:" << endl;
-    cout << "  | minimum pattern depth: " << camera.minPatternDistance << " " << camera.unit << endl;
-    cout << "  | maximum pattern depth: " << camera.maxPatternDistance << " " << camera.unit << endl;
-    cout << "  | minimum radius of the circle of confusion: " << camera.circleOfConfusionRadiusInPixels(camera.minPatternDistance) << " px" << endl;
-    cout << "  | maximum radius of the circle of confusion: " << camera.circleOfConfusionRadiusInPixels(camera.maxPatternDistance) << " px" << endl;
+    cout << "  | minimum pattern depth: " << camera.minMarkerDepth << " " << camera.unit << endl;
+    cout << "  | maximum pattern depth: " << camera.maxMarkerDepth << " " << camera.unit << endl;
+    cout << "  | minimum radius of the circle of confusion: " << camera.minMarkerConfusion << " px" << endl;
+    cout << "  | maximum radius of the circle of confusion: " << camera.maxMarkerConfusion << " px" << endl;
     
     camera.showMaps();
 

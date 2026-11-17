@@ -87,10 +87,10 @@ void TelecentricCamera::computeRegionOfInterest(const cv::Vec3d &rvec, const cv:
 }
 
 void TelecentricCamera::computeSharpImageAndDepthMap() {
-    minPatternDistance = DBL_MAX;
-    maxPatternDistance = -DBL_MAX;
+    minMarkerDepth = DBL_MAX;
+    maxMarkerDepth = -DBL_MAX;
 
-    distanceMap = cv::Mat::zeros(cv::Size(imageWidth, imageHeight), CV_64F);
+    depthMap = cv::Mat::zeros(cv::Size(imageWidth, imageHeight), CV_64F);
     confusionMap = cv::Mat::zeros(cv::Size(imageWidth, imageHeight), CV_64F);
     intensityMap = cv::Mat::ones(cv::Size(imageWidth, imageHeight), CV_64F) * backgroundIntensity;
     countMap = cv::Mat::zeros(cv::Size(imageWidth, imageHeight), CV_32S);
@@ -115,7 +115,7 @@ void TelecentricCamera::computeSharpImageAndDepthMap() {
 
             Eigen::Vector3d intersectionPoint = lensPoint + rayDirection * t;
             double distance = intersectionPoint.z();
-            distanceMap.at<double>(row, col) = distance;
+            depthMap.at<double>(row, col) = distance;
             confusionMap.at<double>(row, col) = circleOfConfusionRadiusInPixels(distance);
 
             int colIntersection = std::floor((markerOriginX + mTc(0, 0) * intersectionPoint.x() + mTc(0, 1) * intersectionPoint.y() + mTc(0, 2) * intersectionPoint.z() + mTc(0, 3)) / markerPixelWidth);
@@ -123,11 +123,11 @@ void TelecentricCamera::computeSharpImageAndDepthMap() {
 
             if (colIntersection >= 0 && colIntersection < markerBitmap.cols && rowIntersection >= 0 && rowIntersection < markerBitmap.rows) {
                 intensityMap.at<double>(row, col) = markerBitmap.at<double>(rowIntersection, colIntersection);
-                if (distance > maxPatternDistance) {
-                    maxPatternDistance = distance;
+                if (distance > maxMarkerDepth) {
+                    maxMarkerDepth = distance;
                 }
-                if (distance < minPatternDistance) {
-                    minPatternDistance = distance;
+                if (distance < minMarkerDepth) {
+                    minMarkerDepth = distance;
                 }
             } else {
                 intensityMap.at<double>(row, col) = backgroundIntensity;

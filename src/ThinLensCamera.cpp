@@ -35,19 +35,18 @@ void ThinLensCamera::showMaps() {
     cv::moveWindow("Count map", 50, 50);
 
     cv::Mat image1;
-    //distanceToEdgeMap.convertTo(image1, CV_8U, 1);
     cv::normalize(distanceToEdgeMap, image1, 1.0, 0, cv::NORM_MINMAX);
     cv::imshow("Distance-to-egde map", image1);
     cv::moveWindow("Distance-to-egde map", 50, 500);
 
     cv::Mat image2;
-    cv::normalize(distanceMap, image2, 1.0, 0, cv::NORM_MINMAX);
-    cv::imshow("Depth map", image2);
+    cv::normalize(depthMap, image2, 1.0, 0, cv::NORM_MINMAX);
+    cv::imshow("Depth map (min: " + std::to_string(minMarkerDepth) + unit + ", max: " + std::to_string(maxMarkerDepth) + unit + ")", image2);
     cv::moveWindow("Depth map", 500, 50);
 
     cv::Mat image3;
     cv::normalize(confusionMap, image3, 1.0, 0, cv::NORM_MINMAX);
-    cv::imshow("Confusion map", image3);
+    cv::imshow("Confusion map (min: " + std::to_string(minMarkerConfusion) + "px, max: " + std::to_string(maxMarkerConfusion) + "px)", image3);
     cv::moveWindow("Confusion map", 500, 500);
 }
 
@@ -130,8 +129,9 @@ void ThinLensCamera::readMarkerBitmap(const std::string &bitmapFilename) {
     cv::normalize(markerBitmap, markerBitmap, 1.0, 0, cv::NORM_MINMAX);
     int minRowCol = std::min(markerBitmap.rows, markerBitmap.cols);
     if (minRowCol < MIN_MARKER_BITMAP_RESOLUTION) {
-        int factor = (MIN_MARKER_BITMAP_RESOLUTION / minRowCol) + 1;
-        cv::resize(markerBitmap, markerBitmap, cv::Size(factor * markerBitmap.cols, factor * markerBitmap.rows), 0, 0, cv::INTER_NEAREST);
+        throw std::runtime_error("The marker bitmap is too small!");
+        //int factor = (MIN_MARKER_BITMAP_RESOLUTION / minRowCol) + 1;
+        //cv::resize(markerBitmap, markerBitmap, cv::Size(factor * markerBitmap.cols, factor * markerBitmap.rows), 0, 0, cv::INTER_NEAREST);
     }
 }
 
@@ -204,10 +204,12 @@ void ThinLensCamera::computeRegionOfInterest(const cv::Vec3d &rvec, const cv::Ve
 }
 
 void ThinLensCamera::computeSharpImageAndDepthMap() {
-    minPatternDistance = DBL_MAX;
-    maxPatternDistance = -DBL_MAX;
+    minMarkerDepth = DBL_MAX;
+    maxMarkerDepth = -DBL_MAX;
+    minMarkerConfusion = DBL_MAX;
+    maxMarkerConfusion = -DBL_MAX;
 
-    distanceMap = cv::Mat::zeros(cv::Size(imageWidth, imageHeight), CV_64F);
+    depthMap = cv::Mat::zeros(cv::Size(imageWidth, imageHeight), CV_64F);
     confusionMap = cv::Mat::zeros(cv::Size(imageWidth, imageHeight), CV_64F);
     intensityMap = cv::Mat::ones(cv::Size(imageWidth, imageHeight), CV_64F) * backgroundIntensity;
     countMap = cv::Mat::zeros(cv::Size(imageWidth, imageHeight), CV_32S);
@@ -223,20 +225,27 @@ void ThinLensCamera::computeSharpImageAndDepthMap() {
             Eigen::Vector3d raysCrossingPoint(xSensor * focusDistanceOverLensToSensorDistance, ySensor * focusDistanceOverLensToSensorDistance, focusDistance);
 
             Eigen::Vector3d intersectionPoint = -raysCrossingPoint * markerDistance / markerNormal.dot(raysCrossingPoint);
-            double distance = intersectionPoint.z();
-            distanceMap.at<double>(row, col) = distance;
-            confusionMap.at<double>(row, col) = circleOfConfusionRadiusInPixels(distance);
+            double depth = intersectionPoint.z();
+            depthMap.at<double>(row, col) = depth;
+            double confusion = circleOfConfusionRadiusInPixels(depth);
+            confusionMap.at<double>(row, col) = confusion;
 
             int colIntersection = std::floor((markerOriginX + mTc(0, 0) * intersectionPoint.x() + mTc(0, 1) * intersectionPoint.y() + mTc(0, 2) * intersectionPoint.z() + mTc(0, 3)) / markerPixelWidth);
             int rowIntersection = std::floor((markerOriginY + mTc(1, 0) * intersectionPoint.x() + mTc(1, 1) * intersectionPoint.y() + mTc(1, 2) * intersectionPoint.z() + mTc(1, 3)) / markerPixelHeight);
 
             if (colIntersection >= 0 && colIntersection < markerBitmap.cols && rowIntersection >= 0 && rowIntersection < markerBitmap.rows) {
                 intensityMap.at<double>(row, col) = markerBitmap.at<double>(rowIntersection, colIntersection);
-                if (distance > maxPatternDistance) {
-                    maxPatternDistance = distance;
+                if (depth > maxMarkerDepth) {
+                    maxMarkerDepth = depth;
                 }
-                if (distance < minPatternDistance) {
-                    minPatternDistance = distance;
+                if (depth < minMarkerDepth) {
+                    minMarkerDepth = depth;
+                }
+                if (confusion > maxMarkerConfusion) {
+                    maxMarkerConfusion = confusion;
+                }
+                if (confusion < minMarkerConfusion) {
+                    minMarkerConfusion = confusion;
                 }
             } else {
                 intensityMap.at<double>(row, col) = backgroundIntensity;

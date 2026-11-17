@@ -10,8 +10,7 @@
 #include "MathUtils.hpp"
 
 #define MAX_TILT_ANGLE_IN_DEG 89.99
-#define MIN_PIXEL_MARGIN  3.0
-#define MIN_MARKER_BITMAP_RESOLUTION 1000
+#define MIN_MARKER_BITMAP_RESOLUTION 3
 
 class ThinLensCamera {
 public:
@@ -39,9 +38,11 @@ public:
     // Results
     const int minIntensityValue = 0;
     int maxIntensityValue;
-    double minPatternDistance;
-    double maxPatternDistance;
-    cv::Mat distanceMap;
+    double minMarkerDepth;
+    double maxMarkerDepth;
+    double minMarkerConfusion;
+    double maxMarkerConfusion;
+    cv::Mat depthMap;
     cv::Mat distanceToEdgeMap;
     cv::Mat edgeMap;
     cv::Mat confusionMap; // radius of the circle of confusion in pixels

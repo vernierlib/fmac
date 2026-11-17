@@ -16,7 +16,7 @@ int main() {
     
     cout << "Generating the pose cloud..." << endl;
     const int seed = 5784;
-    const int poseCount = 100;
+    const int poseCount = 10000;
     PoseCloud cloud(seed, poseCount, box, camera);
     cout << cloud << endl;
 
