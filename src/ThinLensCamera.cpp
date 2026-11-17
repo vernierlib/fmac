@@ -59,8 +59,8 @@ void ThinLensCamera::showMaps() {
     std::cout << "Rendering stats" << std::endl;
     std::cout << "  | rendering time: " << renderingTime << " s" << std::endl;
     std::cout << "  | casted rays count: " << raysCount << std::endl;
-    std::cout << "  | minimum pattern depth: " << minMarkerDepth << " " << unit << std::endl;
-    std::cout << "  | maximum pattern depth: " << maxMarkerDepth << " " << unit << std::endl;
+    std::cout << "  | minimum marker depth: " << minMarkerDepth << " " << unit << std::endl;
+    std::cout << "  | maximum marker depth: " << maxMarkerDepth << " " << unit << std::endl;
     std::cout << "  | minimum radius of the circle of confusion: " << minMarkerConfusion << " px" << std::endl;
     std::cout << "  | maximum radius of the circle of confusion: " << maxMarkerConfusion << " px" << std::endl;
 }
@@ -337,8 +337,7 @@ void ThinLensCamera::refineImageWithAdaptiveSampling() {
                         double ySensor = (distortionMapY.at<float>(row, col) - principalPointY + ry) * pixelPitch * inverseRectificationCoeff;
                         Eigen::Vector3d raysCrossingPoint(xSensor * focusDistanceOverLensToSensorDistance, ySensor * focusDistanceOverLensToSensorDistance, focusDistance);
 
-                        //Eigen::Vector3d lensPoint(lensRadius * (colLens * 2.0 / (sqrtNbRays - 1) - 1.0), lensRadius * (rowLens * 2.0 / (sqrtNbRays - 1) - 1.0), 0.0);
-                        Eigen::Vector3d lensPoint(lensRadius * (2*sobol::sample(sobolIndex, 1) - 1), lensRadius * (2*sobol::sample(sobolIndex, 2) - 1), 0.0);
+                        Eigen::Vector3d lensPoint(lensRadius * (2.0 * sobol::sample(sobolIndex, 3) - 1.0), lensRadius * (2.0 * sobol::sample(sobolIndex, 4) - 1.0), 0.0);
                         concentricMapping(lensPoint.x(), lensPoint.y());
 
                         Eigen::Vector3d rayDirection = raysCrossingPoint - lensPoint;
