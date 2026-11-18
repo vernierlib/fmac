@@ -189,7 +189,7 @@ void ThinLensCamera::computeFrameTransforms(const cv::Vec3d &rvec, const cv::Vec
     markerDistance = mTc(2, 3);
 
     Eigen::Vector3d rayDirection(0.0, 0.0, 1.0);
-    double cosAngle = markerNormal.dot(rayDirection);
+    cosAngle = markerNormal.dot(rayDirection);
     if (cosAngle < cos(MAX_TILT_ANGLE_IN_DEG * PI / 180.0)) {
         throw std::runtime_error("The marker is not visible (tilt angle too large)");
     }
@@ -248,7 +248,7 @@ void ThinLensCamera::computeSharpImageAndDepthMap() {
             double depth = intersectionPoint.z();
             if (depth > 0.0) {
                 depthMap.at<double>(row, col) = depth;
-                double confusion = circleOfConfusionRadiusInPixels(depth);
+                double confusion = circleOfConfusionRadiusInPixels(depth)/cosAngle;
                 confusionMap.at<double>(row, col) = confusion;
 
                 int colIntersection = std::floor((markerOriginX + mTc(0, 0) * intersectionPoint.x() + mTc(0, 1) * intersectionPoint.y() + mTc(0, 2) * intersectionPoint.z() + mTc(0, 3)) / markerPixelWidth);

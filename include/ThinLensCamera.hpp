@@ -55,6 +55,7 @@ public:
     double lensRadius;
     double lensToSensorDistance;
     double renderingTime;
+    double cosAngle;
 
     ThinLensCamera(const std::string &ymlFilename, const std::string &bitmapFilename);
 
